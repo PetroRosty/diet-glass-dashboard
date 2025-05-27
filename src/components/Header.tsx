@@ -68,21 +68,33 @@ const Header = () => {
         </div>
         
         <div className="flex items-center space-x-3">
-          <Button variant="ghost" size="icon" className="text-gray-400 hover:text-white hover:bg-glass-bg">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="text-white/80 hover:text-white hover:bg-white/10 transition-all duration-200"
+          >
             <Bell className="h-5 w-5" />
           </Button>
-          <Button variant="ghost" size="icon" className="text-gray-400 hover:text-white hover:bg-glass-bg">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="text-white/80 hover:text-white hover:bg-white/10 transition-all duration-200"
+          >
             <Settings className="h-5 w-5" />
           </Button>
           
           <Sheet>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="text-gray-400 hover:text-white hover:bg-glass-bg">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="text-white/80 hover:text-white hover:bg-white/10 transition-all duration-200"
+              >
                 {user?.avatar ? (
                   <img 
                     src={user.avatar} 
                     alt={user.name} 
-                    className="w-5 h-5 rounded-full"
+                    className="w-6 h-6 rounded-full object-cover border-2 border-white/20"
                   />
                 ) : (
                   <User className="h-5 w-5" />
