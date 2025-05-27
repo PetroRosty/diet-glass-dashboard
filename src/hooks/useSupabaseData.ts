@@ -44,35 +44,55 @@ export interface WaterIntake {
   created_at: string;
 }
 
-// Проверяем наличие конфигурации Supabase
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+// Получаем конфигурацию Supabase из переменных окружения
+const getSupabaseConfig = () => {
+  const url = import.meta.env.VITE_SUPABASE_URL;
+  const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
+  
+  console.log('Supabase URL:', url ? 'Установлен' : 'Не найден');
+  console.log('Supabase Key:', key ? 'Установлен' : 'Не найден');
+  
+  return { url, key };
+};
 
-const isSupabaseConfigured = () => {
-  return SUPABASE_URL && SUPABASE_ANON_KEY && SUPABASE_URL.trim() !== '' && SUPABASE_ANON_KEY.trim() !== '';
+// Проверяем наличие конфигурации Supabase
+export const isSupabaseConfigured = () => {
+  const { url, key } = getSupabaseConfig();
+  const isConfigured = !!(url && key && url.trim() !== '' && key.trim() !== '');
+  
+  console.log('Supabase configured:', isConfigured);
+  return isConfigured;
 };
 
 // Функция для выполнения запросов к Supabase
 const supabaseRequest = async (endpoint: string) => {
-  if (!isSupabaseConfigured()) {
-    throw new Error('Supabase не настроен. Пожалуйста, настройте переменные окружения VITE_SUPABASE_URL и VITE_SUPABASE_ANON_KEY');
+  const { url, key } = getSupabaseConfig();
+  
+  if (!url || !key) {
+    throw new Error('Supabase не настроен. Переменные VITE_SUPABASE_URL и VITE_SUPABASE_ANON_KEY не найдены');
   }
 
   try {
-    const response = await fetch(`${SUPABASE_URL}/rest/v1/${endpoint}`, {
+    console.log(`Выполняется запрос к Supabase: ${endpoint}`);
+    
+    const response = await fetch(`${url}/rest/v1/${endpoint}`, {
       headers: {
-        'apikey': SUPABASE_ANON_KEY,
-        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'apikey': key,
+        'Authorization': `Bearer ${key}`,
         'Content-Type': 'application/json',
         'Prefer': 'return=representation'
       }
     });
     
+    console.log(`Ответ от Supabase для ${endpoint}:`, response.status, response.statusText);
+    
     if (!response.ok) {
-      throw new Error(`Ошибка загрузки данных: ${response.statusText}`);
+      throw new Error(`Ошибка загрузки данных: ${response.status} ${response.statusText}`);
     }
     
-    return response.json();
+    const data = await response.json();
+    console.log(`Данные получены для ${endpoint}:`, data);
+    return data;
   } catch (error) {
     console.error('Supabase request error:', error);
     throw error;
@@ -209,6 +229,3 @@ export const getWeeklyCalorieData = (meals: Meal[]) => {
   
   return weekData;
 };
-
-// Экспортируем функцию проверки конфигурации
-export { isSupabaseConfigured };
