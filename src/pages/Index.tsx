@@ -20,11 +20,17 @@ const Index = () => {
   const { user } = useAuth();
   const { data: profileData, isLoading: profileLoading } = useUserProfile();
   
+  console.log('Current user:', user);
+  console.log('Profile data from Supabase:', profileData);
+  
   // Получаем имя пользователя из профиля Supabase или из данных авторизации
   const getUserName = () => {
+    // Сначала пробуем получить из профиля Supabase
     if (profileData && profileData.length > 0) {
-      return profileData[0].first_name || user?.name || 'Пользователь';
+      const profile = profileData[0];
+      return profile.first_name || user?.name || 'Пользователь';
     }
+    // Если нет данных в профиле, используем данные из авторизации
     return user?.name || 'Пользователь';
   };
 

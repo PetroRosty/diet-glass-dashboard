@@ -77,10 +77,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       if (credentials.email === 'anna@example.com' && credentials.password === 'password') {
-        // Используем реальный chat_id из базы данных для тестирования
         const user: User = {
-          id: '5841281611', // Реальный chat_id из вашей базы
-          name: 'Анна',
+          id: '5841281611',
+          name: 'Анна Петрова',
           email: credentials.email,
           isPro: false,
           loginMethod: 'email'
