@@ -1,24 +1,62 @@
 
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { useUserMeals, getWeeklyCalorieData } from '@/hooks/useSupabaseData';
+import { Loader2 } from 'lucide-react';
 
 const WeeklyChart = () => {
-  const data = [
-    { day: 'Пн', calories: 1950 },
-    { day: 'Вт', calories: 1800 },
-    { day: 'Ср', calories: 2100 },
-    { day: 'Чт', calories: 1750 },
-    { day: 'Пт', calories: 2000 },
-    { day: 'Сб', calories: 2300 },
-    { day: 'Вс', calories: 1800 }
-  ];
+  const { data: weekMeals, isLoading, error } = useUserMeals(7);
+
+  if (isLoading) {
+    return (
+      <div className="glass-card p-6 animate-fade-in">
+        <h3 className="text-lg font-semibold text-white mb-6">Рацион за неделю</h3>
+        <div className="flex items-center justify-center h-48">
+          <Loader2 className="w-8 h-8 text-fitness-blue animate-spin" />
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="glass-card p-6 animate-fade-in">
+        <h3 className="text-lg font-semibold text-white mb-6">Рацион за неделю</h3>
+        <div className="text-center text-gray-400 py-8">
+          <p>Ошибка загрузки данных за неделю</p>
+        </div>
+      </div>
+    );
+  }
+
+  const meals = weekMeals || [];
+  const data = getWeeklyCalorieData(meals);
+
+  if (meals.length === 0) {
+    return (
+      <div className="glass-card p-6 animate-fade-in">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-semibold text-white">Рацион за неделю</h3>
+        </div>
+        <div className="text-center py-8">
+          <div className="text-4xl mb-4">📊</div>
+          <p className="text-gray-300 mb-2">Недостаточно данных для графика</p>
+          <p className="text-sm text-gray-400">Ведите дневник питания несколько дней, чтобы увидеть тренды</p>
+        </div>
+      </div>
+    );
+  }
+
+  const totalCalories = data.reduce((sum, day) => sum + day.calories, 0);
+  const avgCalories = Math.round(totalCalories / 7);
 
   return (
     <div className="glass-card p-6 animate-fade-in">
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-semibold text-white">Рацион за неделю</h3>
-        <button className="text-fitness-blue hover:text-blue-400 text-sm font-medium transition-colors">
-          Подробнее
-        </button>
+        <div className="text-right">
+          <div className="text-sm text-gray-400">Среднее за день</div>
+          <div className="text-lg font-semibold text-fitness-blue">{avgCalories} ккал</div>
+        </div>
       </div>
       <ResponsiveContainer width="100%" height={200}>
         <LineChart data={data}>
@@ -44,6 +82,9 @@ const WeeklyChart = () => {
           />
         </LineChart>
       </ResponsiveContainer>
+      <div className="mt-4 text-xs text-gray-500">
+        Общее потребление за неделю: {totalCalories.toLocaleString()} ккал
+      </div>
     </div>
   );
 };

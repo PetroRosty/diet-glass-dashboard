@@ -1,3 +1,4 @@
+
 import Header from '@/components/Header';
 import { useAuth } from '@/contexts/AuthContext';
 import CalorieChart from '@/components/CalorieChart';
@@ -12,6 +13,7 @@ import ActionCards from '@/components/ActionCards';
 import ProAnalytics from '@/components/ProAnalytics';
 import ProNutritionist from '@/components/ProNutritionist';
 import ProReports from '@/components/ProReports';
+import DatabaseStatus from '@/components/DatabaseStatus';
 
 const Index = () => {
   const { user } = useAuth();
@@ -21,6 +23,9 @@ const Index = () => {
       <Header />
       
       <main className="max-w-7xl mx-auto px-6 py-8">
+        {/* Статус подключения к базе данных */}
+        <DatabaseStatus />
+
         {/* Приветствие */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-white mb-2">
