@@ -9,6 +9,9 @@ import WeeklyChart from '@/components/WeeklyChart';
 import AIRecommendation from '@/components/AIRecommendation';
 import MealHistory from '@/components/MealHistory';
 import ActionCards from '@/components/ActionCards';
+import ProAnalytics from '@/components/ProAnalytics';
+import ProNutritionist from '@/components/ProNutritionist';
+import ProReports from '@/components/ProReports';
 
 const Index = () => {
   return (
@@ -45,6 +48,9 @@ const Index = () => {
               <WeeklyChart />
             </section>
 
+            {/* PRO Аналитика */}
+            <ProAnalytics />
+
             {/* AI рекомендации */}
             <AIRecommendation />
 
@@ -55,8 +61,12 @@ const Index = () => {
           </div>
 
           {/* Правая колонка */}
-          <div className="lg:col-span-4">
+          <div className="lg:col-span-4 space-y-6">
             <ActionCards />
+            
+            {/* PRO блоки */}
+            <ProNutritionist />
+            <ProReports />
           </div>
         </div>
       </main>
