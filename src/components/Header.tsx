@@ -1,6 +1,8 @@
 
 import { Bell, Settings, User, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 import { 
   Sheet, 
   SheetContent, 
@@ -10,11 +12,26 @@ import {
 } from '@/components/ui/sheet';
 
 const Header = () => {
+  const { user, logout } = useAuth();
+  const { toast } = useToast();
+
+  const handleLogout = () => {
+    logout();
+    toast({
+      title: "До свидания!",
+      description: "Вы успешно вышли из системы.",
+    });
+  };
+
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' });
     }
+  };
+
+  const getInitials = (name: string) => {
+    return name.split(' ').map(n => n[0]).join('').toUpperCase();
   };
 
   return (
@@ -61,7 +78,15 @@ const Header = () => {
           <Sheet>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="text-gray-400 hover:text-white hover:bg-glass-bg">
-                <User className="h-5 w-5" />
+                {user?.avatar ? (
+                  <img 
+                    src={user.avatar} 
+                    alt={user.name} 
+                    className="w-5 h-5 rounded-full"
+                  />
+                ) : (
+                  <User className="h-5 w-5" />
+                )}
               </Button>
             </SheetTrigger>
             <SheetContent className="w-80 bg-gray-900/95 backdrop-blur-lg border-gray-700">
@@ -71,17 +96,33 @@ const Header = () => {
               <div className="mt-8 space-y-6">
                 <div className="flex items-center space-x-4">
                   <div className="w-16 h-16 bg-gradient-to-br from-fitness-blue to-fitness-purple rounded-full flex items-center justify-center">
-                    <span className="text-white font-bold text-xl">А</span>
+                    {user?.avatar ? (
+                      <img 
+                        src={user.avatar} 
+                        alt={user.name} 
+                        className="w-16 h-16 rounded-full"
+                      />
+                    ) : (
+                      <span className="text-white font-bold text-xl">
+                        {user ? getInitials(user.name) : 'А'}
+                      </span>
+                    )}
                   </div>
                   <div>
-                    <h3 className="text-white font-semibold text-lg">Анна</h3>
-                    <p className="text-gray-400 text-sm">anna@example.com</p>
+                    <h3 className="text-white font-semibold text-lg">{user?.name || 'Анна'}</h3>
+                    <p className="text-gray-400 text-sm">{user?.email || 'anna@example.com'}</p>
+                    {user?.isPro && (
+                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-fitness-purple/20 text-fitness-purple border border-fitness-purple/30 mt-1">
+                        PRO
+                      </span>
+                    )}
                   </div>
                 </div>
                 
                 <div className="pt-6 border-t border-gray-700">
                   <Button 
                     variant="ghost" 
+                    onClick={handleLogout}
                     className="w-full justify-start text-red-400 hover:text-red-300 hover:bg-red-400/10"
                   >
                     <LogOut className="h-4 w-4 mr-2" />

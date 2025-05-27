@@ -1,5 +1,5 @@
-
 import Header from '@/components/Header';
+import { useAuth } from '@/contexts/AuthContext';
 import CalorieChart from '@/components/CalorieChart';
 import MacroCards from '@/components/MacroCards';
 import LastMealCard from '@/components/LastMealCard';
@@ -14,6 +14,8 @@ import ProNutritionist from '@/components/ProNutritionist';
 import ProReports from '@/components/ProReports';
 
 const Index = () => {
+  const { user } = useAuth();
+
   return (
     <div className="min-h-screen bg-gray-900">
       <Header />
@@ -21,7 +23,9 @@ const Index = () => {
       <main className="max-w-7xl mx-auto px-6 py-8">
         {/* Приветствие */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">Добро пожаловать, Анна!</h1>
+          <h1 className="text-3xl font-bold text-white mb-2">
+            Добро пожаловать, {user?.name || 'Анна'}!
+          </h1>
           <p className="text-gray-400">Отслеживайте свой прогресс и достигайте целей</p>
         </div>
 
