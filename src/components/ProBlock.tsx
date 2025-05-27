@@ -2,6 +2,14 @@
 import { Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import React from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 
 interface ProBlockProps {
   title: string;
@@ -44,11 +52,43 @@ const ProBlock = ({
             {description}
           </p>
           
-          <Button 
-            className="bg-gradient-to-r from-fitness-purple to-fitness-blue hover:from-purple-600 hover:to-blue-600 text-white font-medium px-6 py-2 rounded-lg transition-all duration-300 transform hover:scale-105"
-          >
-            {buttonText}
-          </Button>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button className="bg-gradient-to-r from-fitness-purple to-fitness-blue hover:from-purple-600 hover:to-blue-600 text-white font-medium px-6 py-2 rounded-lg transition-all duration-300 transform hover:scale-105">
+                {buttonText}
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="bg-gray-900 border-gray-700 max-w-md">
+              <DialogHeader>
+                <DialogTitle className="text-white flex items-center space-x-2">
+                  <Lock className="w-5 h-5 text-fitness-purple" />
+                  <span>Переход на PRO</span>
+                </DialogTitle>
+                <DialogDescription className="text-gray-400">
+                  Откройте доступ ко всем расширенным функциям приложения
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="bg-gradient-to-r from-fitness-purple/20 to-fitness-blue/20 p-4 rounded-lg border border-fitness-purple/30">
+                  <h4 className="text-white font-semibold mb-2">PRO включает:</h4>
+                  <ul className="text-sm text-gray-300 space-y-1">
+                    <li>• Расширенная аналитика питания</li>
+                    <li>• Чат с персональным нутрициологом</li>
+                    <li>• Экспорт PDF-отчётов</li>
+                    <li>• AI-рекомендации нового уровня</li>
+                  </ul>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <Button variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-800">
+                    Узнать больше
+                  </Button>
+                  <Button className="bg-gradient-to-r from-fitness-purple to-fitness-blue hover:from-purple-600 hover:to-blue-600 text-white">
+                    Попробовать PRO
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
     </div>
