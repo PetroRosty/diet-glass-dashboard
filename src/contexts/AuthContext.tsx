@@ -79,7 +79,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (credentials.email === 'anna@example.com' && credentials.password === 'password') {
         // Используем реальный chat_id из базы данных для тестирования
         const user: User = {
-          id: '444444444', // Реальный chat_id из вашей базы
+          id: '5841281611', // Реальный chat_id из вашей базы
           name: 'Анна',
           email: credentials.email,
           isPro: false,
