@@ -1,6 +1,7 @@
 
 import Header from '@/components/Header';
 import { useAuth } from '@/contexts/AuthContext';
+import { useUserProfile } from '@/hooks/useSupabaseData';
 import CalorieChart from '@/components/CalorieChart';
 import MacroCards from '@/components/MacroCards';
 import LastMealCard from '@/components/LastMealCard';
@@ -17,6 +18,15 @@ import DatabaseStatus from '@/components/DatabaseStatus';
 
 const Index = () => {
   const { user } = useAuth();
+  const { data: profileData, isLoading: profileLoading } = useUserProfile();
+  
+  // Получаем имя пользователя из профиля Supabase или из данных авторизации
+  const getUserName = () => {
+    if (profileData && profileData.length > 0) {
+      return profileData[0].first_name || user?.name || 'Пользователь';
+    }
+    return user?.name || 'Пользователь';
+  };
 
   return (
     <div className="min-h-screen bg-gray-900">
@@ -29,7 +39,7 @@ const Index = () => {
         {/* Приветствие */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-white mb-2">
-            Добро пожаловать, {user?.name || 'Анна'}!
+            Добро пожаловать, {profileLoading ? 'Загрузка...' : getUserName()}!
           </h1>
           <p className="text-gray-400">Отслеживайте свой прогресс и достигайте целей</p>
         </div>
