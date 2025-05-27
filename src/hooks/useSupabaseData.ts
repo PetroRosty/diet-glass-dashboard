@@ -44,26 +44,39 @@ export interface WaterIntake {
   created_at: string;
 }
 
-// Базовый URL для API (замените на ваш Supabase URL)
-const SUPABASE_URL = process.env.REACT_APP_SUPABASE_URL || '';
-const SUPABASE_ANON_KEY = process.env.REACT_APP_SUPABASE_ANON_KEY || '';
+// Проверяем наличие конфигурации Supabase
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+const isSupabaseConfigured = () => {
+  return SUPABASE_URL && SUPABASE_ANON_KEY && SUPABASE_URL.trim() !== '' && SUPABASE_ANON_KEY.trim() !== '';
+};
 
 // Функция для выполнения запросов к Supabase
 const supabaseRequest = async (endpoint: string) => {
-  const response = await fetch(`${SUPABASE_URL}/rest/v1/${endpoint}`, {
-    headers: {
-      'apikey': SUPABASE_ANON_KEY,
-      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-      'Content-Type': 'application/json',
-      'Prefer': 'return=representation'
-    }
-  });
-  
-  if (!response.ok) {
-    throw new Error(`Ошибка загрузки данных: ${response.statusText}`);
+  if (!isSupabaseConfigured()) {
+    throw new Error('Supabase не настроен. Пожалуйста, настройте переменные окружения VITE_SUPABASE_URL и VITE_SUPABASE_ANON_KEY');
   }
-  
-  return response.json();
+
+  try {
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/${endpoint}`, {
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=representation'
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Ошибка загрузки данных: ${response.statusText}`);
+    }
+    
+    return response.json();
+  } catch (error) {
+    console.error('Supabase request error:', error);
+    throw error;
+  }
 };
 
 // Хуки для получения данных
@@ -73,9 +86,15 @@ export const useUserProfile = () => {
 
   return useQuery({
     queryKey: ['profile', chatId],
-    queryFn: () => supabaseRequest(`profiles?chat_id=eq.${chatId}`),
-    enabled: !!chatId,
+    queryFn: () => {
+      if (!isSupabaseConfigured()) {
+        throw new Error('Supabase не настроен');
+      }
+      return supabaseRequest(`profiles?chat_id=eq.${chatId}`);
+    },
+    enabled: !!chatId && isSupabaseConfigured(),
     staleTime: 5 * 60 * 1000, // 5 минут
+    retry: false,
   });
 };
 
@@ -88,9 +107,15 @@ export const useUserMeals = (days: number = 7) => {
 
   return useQuery({
     queryKey: ['meals', chatId, days],
-    queryFn: () => supabaseRequest(`meals?chat_id=eq.${chatId}&eaten_at=gte.${dateStr}&order=eaten_at.desc`),
-    enabled: !!chatId,
+    queryFn: () => {
+      if (!isSupabaseConfigured()) {
+        throw new Error('Supabase не настроен');
+      }
+      return supabaseRequest(`meals?chat_id=eq.${chatId}&eaten_at=gte.${dateStr}&order=eaten_at.desc`);
+    },
+    enabled: !!chatId && isSupabaseConfigured(),
     staleTime: 2 * 60 * 1000, // 2 минуты
+    retry: false,
   });
 };
 
@@ -101,9 +126,15 @@ export const useTodayMeals = () => {
 
   return useQuery({
     queryKey: ['todayMeals', chatId, today],
-    queryFn: () => supabaseRequest(`meals?chat_id=eq.${chatId}&eaten_at=gte.${today}&eaten_at=lt.${today}T23:59:59`),
-    enabled: !!chatId,
+    queryFn: () => {
+      if (!isSupabaseConfigured()) {
+        throw new Error('Supabase не настроен');
+      }
+      return supabaseRequest(`meals?chat_id=eq.${chatId}&eaten_at=gte.${today}&eaten_at=lt.${today}T23:59:59`);
+    },
+    enabled: !!chatId && isSupabaseConfigured(),
     staleTime: 1 * 60 * 1000, // 1 минута
+    retry: false,
   });
 };
 
@@ -113,9 +144,15 @@ export const useLatestDigest = () => {
 
   return useQuery({
     queryKey: ['latestDigest', chatId],
-    queryFn: () => supabaseRequest(`digests?chat_id=eq.${chatId}&order=date.desc&limit=1`),
-    enabled: !!chatId,
+    queryFn: () => {
+      if (!isSupabaseConfigured()) {
+        throw new Error('Supabase не настроен');
+      }
+      return supabaseRequest(`digests?chat_id=eq.${chatId}&order=date.desc&limit=1`);
+    },
+    enabled: !!chatId && isSupabaseConfigured(),
     staleTime: 10 * 60 * 1000, // 10 минут
+    retry: false,
   });
 };
 
@@ -126,9 +163,15 @@ export const useTodayWater = () => {
 
   return useQuery({
     queryKey: ['todayWater', chatId, today],
-    queryFn: () => supabaseRequest(`water_intake?chat_id=eq.${chatId}&date=eq.${today}`),
-    enabled: !!chatId,
+    queryFn: () => {
+      if (!isSupabaseConfigured()) {
+        throw new Error('Supabase не настроен');
+      }
+      return supabaseRequest(`water_intake?chat_id=eq.${chatId}&date=eq.${today}`);
+    },
+    enabled: !!chatId && isSupabaseConfigured(),
     staleTime: 2 * 60 * 1000, // 2 минуты
+    retry: false,
   });
 };
 
@@ -166,3 +209,6 @@ export const getWeeklyCalorieData = (meals: Meal[]) => {
   
   return weekData;
 };
+
+// Экспортируем функцию проверки конфигурации
+export { isSupabaseConfigured };
