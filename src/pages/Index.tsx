@@ -27,7 +27,7 @@ const Index = () => {
           {/* Левая колонка */}
           <div className="lg:col-span-8 space-y-6">
             {/* Обзор дня */}
-            <section>
+            <section id="overview">
               <h2 className="text-xl font-semibold text-white mb-4">Обзор дня</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
                 <CalorieChart />
@@ -41,13 +41,17 @@ const Index = () => {
             <ActivityCard />
 
             {/* График за неделю */}
-            <WeeklyChart />
+            <section id="weekly">
+              <WeeklyChart />
+            </section>
 
             {/* AI рекомендации */}
             <AIRecommendation />
 
             {/* История приёмов пищи */}
-            <MealHistory />
+            <section id="history">
+              <MealHistory />
+            </section>
           </div>
 
           {/* Правая колонка */}
