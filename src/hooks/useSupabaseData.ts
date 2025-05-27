@@ -1,4 +1,3 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -44,41 +43,33 @@ export interface WaterIntake {
   created_at: string;
 }
 
-// Получаем конфигурацию Supabase из переменных окружения
-const getSupabaseConfig = () => {
-  const url = import.meta.env.VITE_SUPABASE_URL;
-  const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
-  
-  console.log('Supabase URL:', url ? 'Установлен' : 'Не найден');
-  console.log('Supabase Key:', key ? 'Установлен' : 'Не найден');
-  
-  return { url, key };
-};
+// Прямая конфигурация Supabase
+const SUPABASE_URL = "https://eopdbgulvmunmykoyaha.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVvcGRiZ3Vsdm11bm15a295YWhhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgyNDk2ODQsImV4cCI6MjA2MzgyNTY4NH0.WpOVQpr3vyWIWtfPk6prz-80KzncZLuWumIVQIsEsvw";
 
 // Проверяем наличие конфигурации Supabase
 export const isSupabaseConfigured = () => {
-  const { url, key } = getSupabaseConfig();
-  const isConfigured = !!(url && key && url.trim() !== '' && key.trim() !== '');
+  const isConfigured = !!(SUPABASE_URL && SUPABASE_ANON_KEY && SUPABASE_URL.trim() !== '' && SUPABASE_ANON_KEY.trim() !== '');
   
   console.log('Supabase configured:', isConfigured);
+  console.log('Supabase URL:', SUPABASE_URL);
+  console.log('Supabase Key length:', SUPABASE_ANON_KEY.length);
   return isConfigured;
 };
 
 // Функция для выполнения запросов к Supabase
 const supabaseRequest = async (endpoint: string) => {
-  const { url, key } = getSupabaseConfig();
-  
-  if (!url || !key) {
-    throw new Error('Supabase не настроен. Переменные VITE_SUPABASE_URL и VITE_SUPABASE_ANON_KEY не найдены');
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    throw new Error('Supabase не настроен. URL и ключ не найдены');
   }
 
   try {
     console.log(`Выполняется запрос к Supabase: ${endpoint}`);
     
-    const response = await fetch(`${url}/rest/v1/${endpoint}`, {
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/${endpoint}`, {
       headers: {
-        'apikey': key,
-        'Authorization': `Bearer ${key}`,
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
         'Content-Type': 'application/json',
         'Prefer': 'return=representation'
       }
@@ -87,6 +78,8 @@ const supabaseRequest = async (endpoint: string) => {
     console.log(`Ответ от Supabase для ${endpoint}:`, response.status, response.statusText);
     
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Ошибка Supabase: ${response.status} ${response.statusText}`, errorText);
       throw new Error(`Ошибка загрузки данных: ${response.status} ${response.statusText}`);
     }
     
@@ -110,7 +103,8 @@ export const useUserProfile = () => {
       if (!isSupabaseConfigured()) {
         throw new Error('Supabase не настроен');
       }
-      return supabaseRequest(`profiles?chat_id=eq.${chatId}`);
+      console.log(`Запрос профиля для chat_id: ${chatId}`);
+      return supabaseRequest(`profiles?telegram_id=eq.${chatId}`);
     },
     enabled: !!chatId && isSupabaseConfigured(),
     staleTime: 5 * 60 * 1000, // 5 минут
@@ -131,6 +125,7 @@ export const useUserMeals = (days: number = 7) => {
       if (!isSupabaseConfigured()) {
         throw new Error('Supabase не настроен');
       }
+      console.log(`Запрос питания для chat_id: ${chatId}, дней: ${days}`);
       return supabaseRequest(`meals?chat_id=eq.${chatId}&eaten_at=gte.${dateStr}&order=eaten_at.desc`);
     },
     enabled: !!chatId && isSupabaseConfigured(),
@@ -150,7 +145,8 @@ export const useTodayMeals = () => {
       if (!isSupabaseConfigured()) {
         throw new Error('Supabase не настроен');
       }
-      return supabaseRequest(`meals?chat_id=eq.${chatId}&eaten_at=gte.${today}&eaten_at=lt.${today}T23:59:59`);
+      console.log(`Запрос сегодняшнего питания для chat_id: ${chatId}, дата: ${today}`);
+      return supabaseRequest(`meals?chat_id=eq.${chatId}&eaten_day=eq.${today}`);
     },
     enabled: !!chatId && isSupabaseConfigured(),
     staleTime: 1 * 60 * 1000, // 1 минута
@@ -168,7 +164,8 @@ export const useLatestDigest = () => {
       if (!isSupabaseConfigured()) {
         throw new Error('Supabase не настроен');
       }
-      return supabaseRequest(`digests?chat_id=eq.${chatId}&order=date.desc&limit=1`);
+      console.log(`Запрос дайджеста для chat_id: ${chatId}`);
+      return supabaseRequest(`digests?chat_id=eq.${chatId}&order=for_date.desc&limit=1`);
     },
     enabled: !!chatId && isSupabaseConfigured(),
     staleTime: 10 * 60 * 1000, // 10 минут
@@ -187,6 +184,7 @@ export const useTodayWater = () => {
       if (!isSupabaseConfigured()) {
         throw new Error('Supabase не настроен');
       }
+      console.log(`Запрос воды для chat_id: ${chatId}, дата: ${today}`);
       return supabaseRequest(`water_intake?chat_id=eq.${chatId}&date=eq.${today}`);
     },
     enabled: !!chatId && isSupabaseConfigured(),
