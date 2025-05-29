@@ -145,14 +145,14 @@ export default async function handler(req: IncomingMessage & { query: { [key: st
     // Или, если используете Supabase Auth, то можно использовать их сессии.
     
     // Простой редирект на главную
-    res.writeHead(302, { Location: '/' });
+    res.writeHead(302, { Location: '/?telegram_login=success' });
     res.end();
     return;
 
   } catch (error) {
     console.error('Error processing Telegram auth or interacting with Supabase:', error);
     // В случае ошибки Supabase или другой серверной ошибки
-    res.writeHead(302, { Location: '/' });
+    res.writeHead(302, { Location: '/?telegram_login=failed' });
     res.end();
     return;
   }
