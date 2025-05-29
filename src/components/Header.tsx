@@ -1,8 +1,8 @@
-
-import { Bell, Settings, User, LogOut } from 'lucide-react';
+import { User, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import FeedbackForm from './FeedbackForm';
 import { 
   Sheet, 
   SheetContent, 
@@ -68,21 +68,7 @@ const Header = () => {
         </div>
         
         <div className="flex items-center space-x-3">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="text-white/80 hover:text-white hover:bg-white/10 transition-all duration-200"
-          >
-            <Bell className="h-5 w-5" />
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="text-white/80 hover:text-white hover:bg-white/10 transition-all duration-200"
-          >
-            <Settings className="h-5 w-5" />
-          </Button>
-          
+          <FeedbackForm />
           <Sheet>
             <SheetTrigger asChild>
               <Button 
@@ -121,8 +107,8 @@ const Header = () => {
                     )}
                   </div>
                   <div>
-                    <h3 className="text-white font-semibold text-lg">{user?.name || 'Анна'}</h3>
-                    <p className="text-gray-400 text-sm">{user?.email || 'anna@example.com'}</p>
+                    <h3 className="text-white font-semibold text-lg">{user?.name || 'Пользователь'}</h3>
+                    <p className="text-gray-400 text-sm">{user?.email || 'user@example.com'}</p>
                     {user?.isPro && (
                       <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-fitness-purple/20 text-fitness-purple border border-fitness-purple/30 mt-1">
                         PRO

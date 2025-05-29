@@ -1,9 +1,8 @@
-
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
-import { AuthState, User, LoginCredentials, TelegramUser } from '@/types/auth';
+import { AuthState, User, TelegramUser } from '@/types/auth';
+import { supabase } from '@/lib/supabase';
 
 interface AuthContextType extends AuthState {
-  login: (credentials: LoginCredentials) => Promise<void>;
   loginWithTelegram: (telegramUser: TelegramUser) => Promise<void>;
   logout: () => void;
 }
@@ -69,55 +68,73 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     dispatch({ type: 'SET_LOADING', payload: false });
   }, []);
 
-  const login = async (credentials: LoginCredentials) => {
-    dispatch({ type: 'LOGIN_START' });
-    
-    try {
-      // Mock authentication - replace with real API
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      if (credentials.email === 'anna@example.com' && credentials.password === 'password') {
-        const user: User = {
-          id: '5841281611',
-          name: 'Анна Петрова',
-          email: credentials.email,
-          isPro: false,
-          loginMethod: 'email'
-        };
-        
-        if (credentials.rememberMe) {
-          localStorage.setItem('diet-diary-user', JSON.stringify(user));
-        }
-        
-        dispatch({ type: 'LOGIN_SUCCESS', payload: user });
-      } else {
-        throw new Error('Invalid credentials');
-      }
-    } catch (error) {
-      dispatch({ type: 'LOGIN_ERROR' });
-      throw error;
-    }
-  };
-
   const loginWithTelegram = async (telegramUser: TelegramUser) => {
     dispatch({ type: 'LOGIN_START' });
+    console.log('Starting Telegram login for user:', telegramUser);
     
     try {
-      // Mock Telegram authentication
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Проверяем существование пользователя
+      const telegramId = telegramUser.id_str || telegramUser.id.toString();
+      console.log('Checking for existing profile with telegram_id:', telegramId);
       
+      const { data: existingProfile, error: fetchError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('telegram_id', telegramId)
+        .single();
+
+      console.log('Profile fetch result:', { existingProfile, fetchError });
+
+      if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 - not found
+        console.error('Error fetching profile:', fetchError);
+        throw fetchError;
+      }
+
+      let profile = existingProfile;
+
+      // Если пользователь не существует, создаем его
+      if (!existingProfile) {
+        console.log('Profile not found, creating new profile');
+        const { data: newProfile, error: insertError } = await supabase
+          .from('profiles')
+          .insert([
+            {
+              telegram_id: telegramId,
+              first_name: telegramUser.first_name,
+              last_name: telegramUser.last_name,
+              username: telegramUser.username,
+              photo_url: telegramUser.photo_url,
+              locale: telegramUser.language_code,
+              auth_date: telegramUser.auth_date,
+              hash: telegramUser.hash
+            }
+          ])
+          .select()
+          .single();
+
+        if (insertError) {
+          console.error('Error creating profile:', insertError);
+          throw insertError;
+        }
+        console.log('New profile created:', newProfile);
+        profile = newProfile;
+      }
+
       const user: User = {
-        id: telegramUser.id.toString(),
-        name: telegramUser.first_name + (telegramUser.last_name ? ` ${telegramUser.last_name}` : ''),
-        email: `${telegramUser.username || telegramUser.id}@telegram.user`,
+        id: telegramId,
+        name: `${telegramUser.first_name}${telegramUser.last_name ? ' ' + telegramUser.last_name : ''}`,
+        email: `${telegramUser.username || telegramId}@telegram.user`,
         avatar: telegramUser.photo_url,
-        isPro: false,
+        isPro: profile.is_pro || false,
         loginMethod: 'telegram'
       };
       
+      console.log('Created user object:', user);
       localStorage.setItem('diet-diary-user', JSON.stringify(user));
       dispatch({ type: 'LOGIN_SUCCESS', payload: user });
+      console.log('Login successful, user state updated');
     } catch (error) {
+      console.error('Telegram login error:', error);
       dispatch({ type: 'LOGIN_ERROR' });
       throw error;
     }
@@ -131,7 +148,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   return (
     <AuthContext.Provider value={{
       ...state,
-      login,
       loginWithTelegram,
       logout
     }}>

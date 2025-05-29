@@ -1,175 +1,122 @@
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/lib/supabase';
+import type { Database } from '@/integrations/supabase/types';
 
 // Типы для данных из Supabase
-export interface Meal {
-  id: string;
-  chat_id: string;
-  name: string;
-  calories: number;
-  protein: number;
-  fat: number;
-  carbs: number;
-  eaten_at: string;
-  meal_type: 'breakfast' | 'lunch' | 'dinner' | 'snack';
-}
+export type Meal = Database['public']['Tables']['meals']['Row'];
+export type Digest = Database['public']['Tables']['digests']['Row'];
+export type Profile = Database['public']['Tables']['profiles']['Row'];
 
-export interface Profile {
-  id: string;
-  chat_id: string;
-  name: string;
-  daily_calories_goal: number;
-  daily_protein_goal: number;
-  daily_fat_goal: number;
-  daily_carbs_goal: number;
-  is_pro: boolean;
-  created_at: string;
-}
-
-export interface Digest {
-  id: string;
-  chat_id: string;
-  summary: string;
-  recommendation: string;
-  date: string;
-  created_at: string;
-}
-
-export interface WaterIntake {
-  id: string;
-  chat_id: string;
-  amount: number;
-  date: string;
-  created_at: string;
-}
-
-// Прямая конфигурация Supabase
-const SUPABASE_URL = "https://eopdbgulvmunmykoyaha.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVvcGRiZ3Vsdm11bm15a295YWhhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgyNDk2ODQsImV4cCI6MjA2MzgyNTY4NH0.WpOVQpr3vyWIWtfPk6prz-80KzncZLuWumIVQIsEsvw";
-
-// Проверяем наличие конфигурации Supabase
+// Проверяем конфигурацию Supabase
 export const isSupabaseConfigured = () => {
-  const isConfigured = !!(SUPABASE_URL && SUPABASE_ANON_KEY && SUPABASE_URL.trim() !== '' && SUPABASE_ANON_KEY.trim() !== '');
-  
-  console.log('Supabase configured:', isConfigured);
-  console.log('Supabase URL:', SUPABASE_URL);
-  console.log('Supabase Key length:', SUPABASE_ANON_KEY.length);
-  return isConfigured;
-};
-
-// Функция для выполнения запросов к Supabase
-const supabaseRequest = async (endpoint: string) => {
-  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-    throw new Error('Supabase не настроен. URL и ключ не найдены');
-  }
-
-  try {
-    console.log(`Выполняется запрос к Supabase: ${endpoint}`);
-    
-    const response = await fetch(`${SUPABASE_URL}/rest/v1/${endpoint}`, {
-      headers: {
-        'apikey': SUPABASE_ANON_KEY,
-        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-        'Content-Type': 'application/json',
-        'Prefer': 'return=representation'
-      }
-    });
-    
-    console.log(`Ответ от Supabase для ${endpoint}:`, response.status, response.statusText);
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`Ошибка Supabase: ${response.status} ${response.statusText}`, errorText);
-      throw new Error(`Ошибка загрузки данных: ${response.status} ${response.statusText}`);
-    }
-    
-    const data = await response.json();
-    console.log(`Данные получены для ${endpoint}:`, data);
-    return data;
-  } catch (error) {
-    console.error('Supabase request error:', error);
-    throw error;
-  }
+  return !!supabase;
 };
 
 // Хуки для получения данных
 export const useUserProfile = () => {
   const { user } = useAuth();
-  const chatId = user?.id || '';
+  const chatId = user?.id;
 
   return useQuery({
     queryKey: ['profile', chatId],
-    queryFn: () => {
-      if (!isSupabaseConfigured()) {
-        throw new Error('Supabase не настроен');
+    queryFn: async () => {
+      if (!chatId) throw new Error('User not authenticated');
+      
+      console.log('Fetching profile for chatId:', chatId);
+      
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('telegram_id', chatId);
+
+      if (error) {
+        console.error('Error fetching profile:', error);
+        throw error;
       }
-      console.log(`Запрос профиля для chat_id: ${chatId}`);
-      return supabaseRequest(`profiles?telegram_id=eq.${chatId}`);
+
+      console.log('Profile data received:', data);
+      return data;
     },
-    enabled: !!chatId && isSupabaseConfigured(),
+    enabled: !!chatId,
     staleTime: 5 * 60 * 1000, // 5 минут
-    retry: false,
   });
 };
 
 export const useUserMeals = (days: number = 7) => {
   const { user } = useAuth();
-  const chatId = user?.id || '';
+  const chatId = user?.id;
   const startDate = new Date();
   startDate.setDate(startDate.getDate() - days);
   const dateStr = startDate.toISOString().split('T')[0];
 
   return useQuery({
     queryKey: ['meals', chatId, days],
-    queryFn: () => {
-      if (!isSupabaseConfigured()) {
-        throw new Error('Supabase не настроен');
-      }
-      console.log(`Запрос питания для chat_id: ${chatId}, дней: ${days}`);
-      return supabaseRequest(`meals?chat_id=eq.${chatId}&eaten_at=gte.${dateStr}&order=eaten_at.desc`);
+    queryFn: async () => {
+      if (!chatId) throw new Error('User not authenticated');
+      
+      const { data, error } = await supabase
+        .from('meals')
+        .select('*')
+        .eq('chat_id', chatId)
+        .gte('eaten_at', dateStr)
+        .order('eaten_at', { ascending: false });
+
+      if (error) throw error;
+      return data;
     },
-    enabled: !!chatId && isSupabaseConfigured(),
+    enabled: !!chatId,
     staleTime: 2 * 60 * 1000, // 2 минуты
-    retry: false,
   });
 };
 
 export const useTodayMeals = () => {
   const { user } = useAuth();
-  const chatId = user?.id || '';
+  const chatId = user?.id;
   const today = new Date().toISOString().split('T')[0];
 
   return useQuery({
     queryKey: ['todayMeals', chatId, today],
-    queryFn: () => {
-      if (!isSupabaseConfigured()) {
-        throw new Error('Supabase не настроен');
-      }
-      console.log(`Запрос сегодняшнего питания для chat_id: ${chatId}, дата: ${today}`);
-      return supabaseRequest(`meals?chat_id=eq.${chatId}&eaten_day=eq.${today}`);
+    queryFn: async () => {
+      if (!chatId) throw new Error('User not authenticated');
+      
+      const { data, error } = await supabase
+        .from('meals')
+        .select('*')
+        .eq('chat_id', chatId)
+        .eq('eaten_day', today)
+        .order('eaten_at', { ascending: false });
+
+      if (error) throw error;
+      return data;
     },
-    enabled: !!chatId && isSupabaseConfigured(),
+    enabled: !!chatId,
     staleTime: 1 * 60 * 1000, // 1 минута
-    retry: false,
   });
 };
 
 export const useLatestDigest = () => {
   const { user } = useAuth();
-  const chatId = user?.id || '';
+  const chatId = user?.id;
 
   return useQuery({
     queryKey: ['latestDigest', chatId],
-    queryFn: () => {
-      if (!isSupabaseConfigured()) {
-        throw new Error('Supabase не настроен');
-      }
-      console.log(`Запрос дайджеста для chat_id: ${chatId}`);
-      return supabaseRequest(`digests?chat_id=eq.${chatId}&order=for_date.desc&limit=1`);
+    queryFn: async () => {
+      if (!chatId) throw new Error('User not authenticated');
+      
+      const { data, error } = await supabase
+        .from('digests')
+        .select('*')
+        .eq('chat_id', chatId)
+        .order('for_date', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (error && error.code !== 'PGRST116') throw error; // PGRST116 - not found
+      return data;
     },
-    enabled: !!chatId && isSupabaseConfigured(),
+    enabled: !!chatId,
     staleTime: 10 * 60 * 1000, // 10 минут
-    retry: false,
   });
 };
 
@@ -196,10 +143,10 @@ export const useTodayWater = () => {
 // Вспомогательные функции для обработки данных
 export const calculateTodayTotals = (meals: Meal[]) => {
   return meals.reduce((totals, meal) => ({
-    calories: totals.calories + (meal.calories || 0),
-    protein: totals.protein + (meal.protein || 0),
+    calories: totals.calories + (meal.kcal || 0),
+    protein: totals.protein + (meal.prot || 0),
     fat: totals.fat + (meal.fat || 0),
-    carbs: totals.carbs + (meal.carbs || 0),
+    carbs: totals.carbs + (meal.carb || 0),
   }), { calories: 0, protein: 0, fat: 0, carbs: 0 });
 };
 
@@ -216,7 +163,7 @@ export const getWeeklyCalorieData = (meals: Meal[]) => {
       meal.eaten_at.startsWith(dateStr)
     );
     
-    const totalCalories = dayMeals.reduce((sum, meal) => sum + (meal.calories || 0), 0);
+    const totalCalories = dayMeals.reduce((sum, meal) => sum + (meal.kcal || 0), 0);
     
     weekData.push({
       day: date.toLocaleDateString('ru-RU', { weekday: 'short' }),
@@ -226,4 +173,85 @@ export const getWeeklyCalorieData = (meals: Meal[]) => {
   }
   
   return weekData;
+};
+
+export const useMonthlyAnalytics = () => {
+  const { user } = useAuth();
+  const chatId = user?.id;
+
+  // Получаем дату 5 месяцев назад
+  const startDate = new Date();
+  startDate.setMonth(startDate.getMonth() - 5);
+  const dateStr = startDate.toISOString().split('T')[0];
+
+  return useQuery({
+    queryKey: ['monthlyAnalytics', chatId],
+    queryFn: async () => {
+      if (!chatId) throw new Error('User not authenticated');
+      
+      const { data, error } = await supabase
+        .from('meals')
+        .select('*')
+        .eq('chat_id', chatId)
+        .gte('eaten_at', dateStr)
+        .order('eaten_at', { ascending: true });
+
+      if (error) throw error;
+
+      // Группируем данные по месяцам
+      const monthlyData = data.reduce((acc: { [key: string]: any[] }, meal) => {
+        const date = new Date(meal.eaten_at);
+        const monthKey = date.toLocaleString('ru-RU', { month: 'short' });
+        
+        if (!acc[monthKey]) {
+          acc[monthKey] = [];
+        }
+        acc[monthKey].push(meal);
+        return acc;
+      }, {});
+
+      // Вычисляем средние значения для каждого месяца
+      const result = Object.entries(monthlyData).map(([month, meals]) => {
+        const totals = meals.reduce((sum, meal) => ({
+          calories: sum.calories + (meal.kcal || 0),
+          protein: sum.protein + (meal.prot || 0),
+          fat: sum.fat + (meal.fat || 0),
+          carbs: sum.carbs + (meal.carb || 0),
+        }), { calories: 0, protein: 0, fat: 0, carbs: 0 });
+
+        const daysInMonth = new Set(meals.map(meal => meal.eaten_at.split('T')[0])).size;
+        
+        return {
+          month,
+          calories: Math.round(totals.calories / daysInMonth),
+          protein: Math.round(totals.protein / daysInMonth),
+          fat: Math.round(totals.fat / daysInMonth),
+          carbs: Math.round(totals.carbs / daysInMonth),
+          daysWithData: daysInMonth
+        };
+      });
+
+      // Сортируем по месяцам
+      const monthOrder = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'];
+      result.sort((a, b) => monthOrder.indexOf(a.month) - monthOrder.indexOf(b.month));
+
+      // Вычисляем общую статистику
+      const totalDays = result.reduce((sum, month) => sum + month.daysWithData, 0);
+      const avgCalories = Math.round(result.reduce((sum, month) => sum + month.calories, 0) / result.length);
+      const goalCompletion = result.length > 0 ? 
+        Math.round((result.filter(month => month.calories > 0).length / result.length) * 100) : 0;
+
+      return {
+        monthlyData: result,
+        stats: {
+          totalDays,
+          avgCalories,
+          goalCompletion,
+          monthsWithData: result.length
+        }
+      };
+    },
+    enabled: !!chatId,
+    staleTime: 5 * 60 * 1000, // 5 минут
+  });
 };

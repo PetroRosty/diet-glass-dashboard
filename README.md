@@ -1,73 +1,70 @@
-# Welcome to your Lovable project
+# Диет-Дневник
 
-## Project info
+Приложение для отслеживания питания и диеты с интеграцией Telegram.
 
-**URL**: https://lovable.dev/projects/da8cf565-c625-4f55-974e-7ab601c8efe2
+## Особенности
 
-## How can I edit this code?
+- 🔐 Аутентификация через Telegram
+- 📊 Отслеживание калорий и макронутриентов
+- 📱 Адаптивный дизайн
+- 📈 Аналитика и отчеты
+- 🤖 AI-рекомендации по питанию
+- 💧 Отслеживание водного баланса
 
-There are several ways of editing your application.
+## Технологии
 
-**Use Lovable**
+- React + TypeScript
+- Vite
+- Tailwind CSS
+- Supabase
+- Telegram Bot API
+- shadcn/ui
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/da8cf565-c625-4f55-974e-7ab601c8efe2) and start prompting.
+## Установка
 
-Changes made via Lovable will be committed automatically to this repo.
+1. Клонируйте репозиторий:
+```bash
+git clone https://github.com/your-username/diet-dashboard.git
+cd diet-dashboard
+```
 
-**Use your preferred IDE**
+2. Установите зависимости:
+```bash
+npm install
+```
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+3. Создайте файл `.env` на основе `.env.example`:
+```bash
+cp .env.example .env
+```
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+4. Заполните переменные окружения в `.env`:
+- `VITE_SUPABASE_URL`: URL вашего проекта Supabase
+- `VITE_SUPABASE_ANON_KEY`: Анонимный ключ Supabase
 
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+5. Запустите проект:
+```bash
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+## Разработка
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+- `npm run dev` - запуск сервера разработки
+- `npm run build` - сборка проекта
+- `npm run preview` - предпросмотр собранного проекта
 
-**Use GitHub Codespaces**
+## Деплой
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+Проект можно развернуть на любой платформе, поддерживающей статические сайты (Vercel, Netlify, GitHub Pages).
 
-## What technologies are used for this project?
+Не забудьте настроить переменные окружения на платформе деплоя.
 
-This project is built with:
+## Безопасность
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+- Все чувствительные данные хранятся в переменных окружения
+- Используется анонимный ключ Supabase для клиентской части
+- Аутентификация через Telegram обеспечивает безопасный вход
 
-## How can I deploy this project?
+## Лицензия
 
-Simply open [Lovable](https://lovable.dev/projects/da8cf565-c625-4f55-974e-7ab601c8efe2) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+MIT

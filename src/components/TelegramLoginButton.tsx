@@ -1,51 +1,87 @@
-
-import React from 'react';
-import { Button } from '@/components/ui/button';
+import React, { useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { TelegramUser } from '@/types/auth';
+
+declare global {
+  interface Window {
+    TelegramLoginWidget: {
+      dataOnauth: (user: TelegramUser) => void;
+    };
+  }
+}
 
 const TelegramLoginButton = () => {
   const { loginWithTelegram } = useAuth();
   const { toast } = useToast();
 
-  const handleTelegramLogin = async () => {
-    try {
-      // Mock Telegram user data for demo
-      const mockTelegramUser: TelegramUser = {
-        id: 123456789,
-        first_name: "Анна",
-        last_name: "Смирнова",
-        username: "anna_smirnova",
-        photo_url: "https://via.placeholder.com/64x64/3b82f6/ffffff?text=A",
-        auth_date: Date.now(),
-        hash: "mock_hash"
-      };
+  useEffect(() => {
+    console.log('Initializing Telegram Login Widget...');
+    
+    // Добавляем скрипт Telegram Login Widget
+    const script = document.createElement('script');
+    script.src = 'https://telegram.org/js/telegram-widget.js?22';
+    script.setAttribute('data-telegram-login', 'DietDiaryBot');
+    script.setAttribute('data-size', 'large');
+    script.setAttribute('data-radius', '8');
+    script.setAttribute('data-request-access', 'write');
+    script.setAttribute('data-userpic', 'true');
+    script.setAttribute('data-onauth', 'onTelegramAuth(user)');
+    script.async = true;
 
-      await loginWithTelegram(mockTelegramUser);
-      
-      toast({
-        title: "Добро пожаловать!",
-        description: "Вы успешно вошли через Telegram.",
-      });
-    } catch (error) {
-      toast({
-        title: "Ошибка входа",
-        description: "Не удалось войти через Telegram. Попробуйте снова.",
-      });
+    // Логируем все атрибуты скрипта для отладки
+    console.log('Telegram Login Widget attributes:', {
+      botName: script.getAttribute('data-telegram-login'),
+      size: script.getAttribute('data-size'),
+      radius: script.getAttribute('data-radius'),
+      requestAccess: script.getAttribute('data-request-access'),
+      userpic: script.getAttribute('data-userpic'),
+      onAuth: script.getAttribute('data-onauth')
+    });
+
+    // Определяем функцию обратного вызова
+    window.onTelegramAuth = async (user: TelegramUser) => {
+      console.log('Telegram auth callback received:', user);
+      try {
+        await loginWithTelegram(user);
+        console.log('Login successful');
+        toast({
+          title: "Добро пожаловать!",
+          description: "Вы успешно вошли через Telegram.",
+        });
+      } catch (error) {
+        console.error('Telegram login error:', error);
+        toast({
+          title: "Ошибка входа",
+          description: "Не удалось войти через Telegram. Попробуйте снова.",
+          variant: "destructive"
+        });
+      }
+    };
+
+    // Добавляем скрипт на страницу
+    const container = document.getElementById('telegram-login-container');
+    if (container) {
+      console.log('Found container for Telegram Login Widget');
+      container.appendChild(script);
+    } else {
+      console.error('Container for Telegram Login Widget not found!');
     }
-  };
+
+    // Очистка при размонтировании
+    return () => {
+      console.log('Cleaning up Telegram Login Widget...');
+      if (container && script.parentNode) {
+        container.removeChild(script);
+      }
+      delete window.onTelegramAuth;
+    };
+  }, [loginWithTelegram, toast]);
 
   return (
-    <Button
-      onClick={handleTelegramLogin}
-      className="w-full bg-[#0088cc] hover:bg-[#0077b3] text-white flex items-center justify-center space-x-2"
-    >
-      <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
-      </svg>
-      <span>Войти через Telegram</span>
-    </Button>
+    <div id="telegram-login-container" className="flex justify-center">
+      {/* Telegram Login Widget будет вставлен сюда */}
+    </div>
   );
 };
 

@@ -1,4 +1,3 @@
-
 import { Sparkles, Loader2 } from 'lucide-react';
 import { useLatestDigest } from '@/hooks/useSupabaseData';
 
@@ -19,7 +18,7 @@ const AIRecommendation = () => {
     );
   }
 
-  if (error || !digest || digest.length === 0) {
+  if (error || !digest) {
     return (
       <div className="glass-card p-6 animate-fade-in">
         <div className="flex items-center space-x-2 mb-4">
@@ -37,7 +36,6 @@ const AIRecommendation = () => {
     );
   }
 
-  const latestDigest = digest[0];
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     const today = new Date();
@@ -56,24 +54,24 @@ const AIRecommendation = () => {
           <Sparkles className="w-5 h-5 text-fitness-purple" />
           <h3 className="text-lg font-semibold text-white">AI-диетолог</h3>
         </div>
-        <span className="text-xs text-gray-500">{formatDate(latestDigest.date)}</span>
+        <span className="text-xs text-gray-500">{formatDate(digest.for_date)}</span>
       </div>
       
       <div className="space-y-4">
-        {latestDigest.summary && (
+        {digest.summary_md && (
           <div className="bg-gradient-to-r from-fitness-blue/20 to-fitness-purple/20 rounded-lg p-4 border border-fitness-blue/30">
             <h4 className="text-sm font-semibold text-fitness-blue mb-2">Анализ дня:</h4>
             <p className="text-gray-200 text-sm leading-relaxed">
-              {latestDigest.summary}
+              {digest.summary_md}
             </p>
           </div>
         )}
         
-        {latestDigest.recommendation && (
+        {digest.recommendation && (
           <div className="bg-gradient-to-r from-fitness-purple/20 to-fitness-green/20 rounded-lg p-4 border border-fitness-purple/30">
             <h4 className="text-sm font-semibold text-fitness-purple mb-2">Рекомендация:</h4>
             <p className="text-gray-200 text-sm leading-relaxed">
-              {latestDigest.recommendation}
+              {digest.recommendation}
             </p>
           </div>
         )}

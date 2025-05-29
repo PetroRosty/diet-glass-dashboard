@@ -1,4 +1,3 @@
-
 import { Calendar, Clock, Loader2 } from 'lucide-react';
 import { useUserMeals } from '@/hooks/useSupabaseData';
 
@@ -112,8 +111,8 @@ const MealHistory = () => {
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center space-x-2 mb-1">
-                <h4 className="text-white font-medium truncate">{meal.name}</h4>
-                <span className="text-xs text-fitness-green font-medium">{meal.calories} ккал</span>
+                <h4 className="text-white font-medium truncate">{meal.dish}</h4>
+                <span className="text-xs text-fitness-green font-medium">{meal.kcal} ккал</span>
               </div>
               <div className="flex items-center space-x-2 text-sm text-gray-400 mb-1">
                 <Clock className="w-3 h-3" />
@@ -123,9 +122,9 @@ const MealHistory = () => {
                 <span>•</span>
                 <span>{formatDate(meal.eaten_at)}</span>
               </div>
-              {(meal.protein || meal.fat || meal.carbs) && (
+              {(meal.prot || meal.fat || meal.carb) && (
                 <div className="text-xs text-gray-500">
-                  Б: {Math.round(meal.protein || 0)}г • Ж: {Math.round(meal.fat || 0)}г • У: {Math.round(meal.carbs || 0)}г
+                  Б: {Math.round(meal.prot || 0)}г • Ж: {Math.round(meal.fat || 0)}г • У: {Math.round(meal.carb || 0)}г
                 </div>
               )}
             </div>

@@ -1,4 +1,3 @@
-
 import { Clock, Loader2 } from 'lucide-react';
 import { useTodayMeals } from '@/hooks/useSupabaseData';
 
@@ -99,23 +98,23 @@ const LastMealCard = () => {
             {getMealTypeIcon(lastMeal.meal_type)}
           </div>
           <div className="flex-1">
-            <h4 className="text-white font-medium">{lastMeal.name}</h4>
+            <h4 className="text-white font-medium">{lastMeal.dish}</h4>
             <div className="flex items-center space-x-2 text-sm text-gray-400">
               <Clock className="w-4 h-4" />
               <span>{formatTime(lastMeal.eaten_at)}</span>
               <span>•</span>
               <span>{getMealTypeName(lastMeal.meal_type)}</span>
               <span>•</span>
-              <span className="text-fitness-green">{lastMeal.calories} ккал</span>
+              <span className="text-fitness-green">{lastMeal.kcal} ккал</span>
             </div>
             <div className="text-xs text-gray-500 mt-1">
               {getTimeAgo(lastMeal.eaten_at)}
             </div>
           </div>
         </div>
-        {(lastMeal.protein || lastMeal.fat || lastMeal.carbs) && (
+        {(lastMeal.prot || lastMeal.fat || lastMeal.carb) && (
           <div className="text-xs text-gray-500">
-            Белки: {Math.round(lastMeal.protein || 0)}г • Жиры: {Math.round(lastMeal.fat || 0)}г • Углеводы: {Math.round(lastMeal.carbs || 0)}г
+            Белки: {Math.round(lastMeal.prot || 0)}г • Жиры: {Math.round(lastMeal.fat || 0)}г • Углеводы: {Math.round(lastMeal.carb || 0)}г
           </div>
         )}
       </div>

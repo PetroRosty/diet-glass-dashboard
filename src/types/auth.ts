@@ -1,23 +1,16 @@
-
 export interface User {
   id: string;
   name: string;
   email: string;
   avatar?: string;
   isPro: boolean;
-  loginMethod: 'email' | 'telegram';
+  loginMethod: 'telegram';
 }
 
 export interface AuthState {
   isAuthenticated: boolean;
   user: User | null;
   isLoading: boolean;
-}
-
-export interface LoginCredentials {
-  email: string;
-  password: string;
-  rememberMe?: boolean;
 }
 
 export interface TelegramUser {
@@ -28,4 +21,9 @@ export interface TelegramUser {
   photo_url?: string;
   auth_date: number;
   hash: string;
+  language_code?: string;
+  id_str?: string;
+  auth_date_str?: string;
+  check_string?: string;
+  check_hash?: string;
 }

@@ -1,4 +1,3 @@
-
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { useTodayMeals, useUserProfile, calculateTodayTotals } from '@/hooks/useSupabaseData';
 import { Loader2 } from 'lucide-react';
@@ -64,36 +63,47 @@ const CalorieChart = () => {
   return (
     <div className="glass-card p-6 animate-fade-in">
       <h3 className="text-lg font-semibold text-white mb-4">Калории сегодня</h3>
-      <div className="relative">
-        <ResponsiveContainer width="100%" height={200}>
-          <PieChart>
-            <Pie
-              data={data}
-              cx="50%"
-              cy="50%"
-              innerRadius={60}
-              outerRadius={80}
-              startAngle={90}
-              endAngle={450}
-              dataKey="value"
-            >
-              {data.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.color} />
-              ))}
-            </Pie>
-          </PieChart>
-        </ResponsiveContainer>
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-white">{consumed}</div>
-            <div className="text-sm text-gray-400">из {dailyGoal} ккал</div>
-            <div className="text-xs text-fitness-blue">{percentage}%</div>
+      <div className="flex flex-col items-center">
+        <div className="relative w-48 h-48 mb-4">
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={data}
+                cx="50%"
+                cy="50%"
+                innerRadius={60}
+                outerRadius={80}
+                paddingAngle={2}
+                dataKey="value"
+              >
+                {data.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
+                ))}
+              </Pie>
+            </PieChart>
+          </ResponsiveContainer>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-white">{percentage}%</div>
+              <div className="text-sm text-gray-400">от цели</div>
+            </div>
           </div>
         </div>
-      </div>
-      <div className="mt-4 flex justify-between text-sm">
-        <span className="text-fitness-blue">Потреблено: {consumed}</span>
-        <span className="text-gray-400">Осталось: {remaining}</span>
+        <div className="grid grid-cols-2 gap-4 w-full">
+          <div className="text-center">
+            <div className="text-sm text-gray-400 mb-1">Потреблено</div>
+            <div className="text-xl font-bold text-white">{consumed}</div>
+            <div className="text-xs text-gray-500">ккал</div>
+          </div>
+          <div className="text-center">
+            <div className="text-sm text-gray-400 mb-1">Осталось</div>
+            <div className="text-xl font-bold text-white">{remaining}</div>
+            <div className="text-xs text-gray-500">ккал</div>
+          </div>
+        </div>
+        <div className="mt-4 text-sm text-fitness-blue">
+          Дневная цель: {dailyGoal} ккал
+        </div>
       </div>
     </div>
   );
