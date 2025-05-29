@@ -1,6 +1,7 @@
-import { VercelRequest, VercelResponse } from '@vercel/node';
+import type { IncomingMessage, ServerResponse } from 'http';
 import { createClient } from '@supabase/supabase-js';
 import { createHash, createHmac } from 'crypto';
+import { parse } from 'url';
 
 // Инициализация Supabase клиента
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
@@ -42,9 +43,10 @@ const checkTelegramAuth = (data: any, botToken: string): boolean => {
   return hmac === hash;
 };
 
-export default async (req: VercelRequest, res: VercelResponse) => {
+export default async (req: IncomingMessage & { query: { [key: string]: string | string[] } }, res: ServerResponse) => {
   // Получаем данные пользователя из параметров запроса
-  const userData = req.query;
+  const parsedUrl = parse(req.url || '', true);
+  const userData = parsedUrl.query;
 
   console.log('Received Telegram auth data:', userData);
 
@@ -52,7 +54,9 @@ export default async (req: VercelRequest, res: VercelResponse) => {
   if (!BOT_TOKEN || !checkTelegramAuth(userData, BOT_TOKEN)) {
     console.error('Telegram auth data check failed.');
     // В случае ошибки перенаправляем на страницу входа с индикацией ошибки
-    return res.redirect('/'); // Можно добавить параметр ошибки: res.redirect('/?error=telegram_auth_failed');
+    res.writeHead(302, { Location: '/' });
+    res.end();
+    return;
   }
 
   // Проверяем актуальность данных (например, не старше 1 часа)
@@ -62,7 +66,9 @@ export default async (req: VercelRequest, res: VercelResponse) => {
 
   if (now - authDate > maxAge) {
       console.error('Telegram auth data is too old.');
-      return res.redirect('/'); // Или другая страница ошибки
+      res.writeHead(302, { Location: '/' });
+      res.end();
+      return;
   }
 
   // Данные подлинны и актуальны, обрабатываем пользователя в Supabase
@@ -139,11 +145,15 @@ export default async (req: VercelRequest, res: VercelResponse) => {
     // Или, если используете Supabase Auth, то можно использовать их сессии.
     
     // Простой редирект на главную
-    return res.redirect('/'); // Клиентская сторона должна определить авторизацию по Supabase или локальному хранилищу
+    res.writeHead(302, { Location: '/' });
+    res.end();
+    return;
 
   } catch (error) {
     console.error('Error processing Telegram auth or interacting with Supabase:', error);
     // В случае ошибки Supabase или другой серверной ошибки
-    return res.redirect('/'); // Можно добавить параметр ошибки
+    res.writeHead(302, { Location: '/' });
+    res.end();
+    return;
   }
 }; 
