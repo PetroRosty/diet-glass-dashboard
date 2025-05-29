@@ -43,7 +43,7 @@ const checkTelegramAuth = (data: any, botToken: string): boolean => {
   return hmac === hash;
 };
 
-export default async (req: IncomingMessage & { query: { [key: string]: string | string[] } }, res: ServerResponse) => {
+export default async function handler(req: IncomingMessage & { query: { [key: string]: string | string[] } }, res: ServerResponse) {
   // Получаем данные пользователя из параметров запроса
   const parsedUrl = parse(req.url || '', true);
   const userData = parsedUrl.query;
@@ -156,4 +156,4 @@ export default async (req: IncomingMessage & { query: { [key: string]: string | 
     res.end();
     return;
   }
-}; 
+} 
