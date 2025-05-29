@@ -26,7 +26,7 @@ const TelegramLoginButton = () => {
     script.setAttribute('data-userpic', 'true');
     script.setAttribute(
       'data-auth-url',
-      'https://diet-glass-dashboard-rostys-projects-a13eaaf6.vercel.app/api/auth/telegram'
+      'https://diet-glass-dashboard.vercel.app/api/auth/telegram'
     );
     script.async = true;
 
