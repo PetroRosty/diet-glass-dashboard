@@ -14,37 +14,35 @@ const TelegramLoginButton = () => {
       console.log('Telegram authentication data received:', user);
 
       try {
-        console.log('Sending Telegram auth data to server for verification and upsert...');
-        const res = await fetch('/api/auth/telegram', {
+        console.log('Sending Telegram auth data to server...');
+        const response = await fetch('/api/auth/telegram', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(user)
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(user),
         });
 
-        const data = await res.json();
-        console.log('Server response:', data);
+        const result = await response.json();
+        console.log('Server response:', result);
 
-        if (res.ok && data.success) {
-          console.log('Server auth successful, updating client state...');
-          const authenticatedUser: User = {
-            id: user.id.toString(),
-            name: `${user.first_name}${user.last_name ? ' ' + user.last_name : ''}`,
-            email: user.username ? `${user.username}@telegram.user` : `${user.id}@telegram.user`,
-            avatar: user.photo_url,
-            isPro: data.user?.is_pro || false,
-            loginMethod: 'telegram'
+        if (response.ok && result.success) {
+          console.log('Server auth successful');
+          const authenticatedUser = {
+            id: result.user.telegram_id.toString(),
+            name: result.user.first_name + (result.user.last_name ? ' ' + result.user.last_name : ''),
+            email: result.user.username ? `${result.user.username}@telegram.user` : `${result.user.telegram_id}@telegram.user`,
+            avatar: result.user.photo_url || null,
+            isPro: result.user.is_pro || false,
+            loginMethod: 'telegram' as 'telegram'
           };
-
           setAuthenticatedUser(authenticatedUser);
-
+          navigate('/');
         } else {
-          console.error('Server auth failed:', data.error || 'Unknown server error');
-          navigate('/login?error=telegram_auth_failed');
+          console.error('Server auth failed:', result.error || response.statusText);
         }
-
       } catch (error) {
-        console.error('Error sending auth data to server:', error);
-        navigate('/login?error=network_error');
+        console.error('Error during Telegram auth fetch or state update:', error);
       }
     };
 
