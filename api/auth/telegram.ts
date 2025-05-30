@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { URL } from 'url';
+import * as crypto from 'node:crypto';
 
 // Initialize Supabase client with service role key for server-side operations
 const supabase = createClient(
@@ -7,13 +8,10 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY! // Use service role key for server operations
 );
 
-// Function to verify Telegram hash (using dynamic import for crypto)
-async function checkTelegramHash(data: Record<string, string>, botToken: string): Promise<boolean> {
+// Function to verify Telegram hash
+function checkTelegramHash(data: Record<string, string>, botToken: string): boolean {
   const { hash, ...userData } = data;
   if (!hash) return false;
-
-  // Dynamically import crypto
-  const crypto = await import('node:crypto');
 
   // Create data check string as per Telegram docs
   const dataCheckArr = Object.keys(userData)
@@ -44,7 +42,7 @@ export default async function handler(req: Request) {
     // Check if we have all required data
     const requiredFields = ['id', 'first_name', 'username', 'hash', 'auth_date'];
     const missingFields = requiredFields.filter(field => !params[field]);
-    
+
     if (missingFields.length > 0) {
       console.error('Missing required fields:', missingFields);
       // Use url.origin for redirect
@@ -59,10 +57,9 @@ export default async function handler(req: Request) {
       return Response.redirect(`${url.origin}?telegram_login=failed&error=server_config`);
     }
 
-    // Use await here for the async checkTelegramHash function
-    if (!await checkTelegramHash(params, botToken)) {
+    if (!checkTelegramHash(params, botToken)) {
       console.error('Invalid hash');
-       // Use url.origin for redirect
+      // Use url.origin for redirect
       return Response.redirect(`${url.origin}?telegram_login=failed&error=invalid_hash`);
     }
 
@@ -71,7 +68,7 @@ export default async function handler(req: Request) {
     const now = Math.floor(Date.now() / 1000);
     if (now - authDate > 3600) {
       console.error('Auth data is too old');
-       // Use url.origin for redirect
+      // Use url.origin for redirect
       return Response.redirect(`${url.origin}?telegram_login=failed&error=expired`);
     }
 
@@ -90,7 +87,7 @@ export default async function handler(req: Request) {
 
     if (upsertError) {
       console.error('Error upserting profile:', upsertError);
-       // Use url.origin for redirect
+      // Use url.origin for redirect
       return Response.redirect(`${url.origin}?telegram_login=failed&error=database`);
     }
 
@@ -107,7 +104,7 @@ export default async function handler(req: Request) {
     console.error('Error in telegram auth handler:', error);
     // If url was successfully created, use its origin, otherwise redirect to root
     if (url) {
-       // Use url.origin for redirect
+      // Use url.origin for redirect
       return Response.redirect(`${url.origin}?telegram_login=failed&error=server_error`);
     } else {
       // If URL parsing failed, redirect to root with a generic error
