@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProProvider } from "@/contexts/ProContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import TelegramAuthHandler from "@/components/TelegramAuthHandler";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 
@@ -19,6 +20,7 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
+            <TelegramAuthHandler />
             <Routes>
               <Route path="/" element={
                 <ProtectedRoute>

@@ -1,24 +1,13 @@
 import React, { useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { TelegramUser } from '@/types/auth';
-
-declare global {
-  interface Window {
-    TelegramLoginWidget: {
-      dataOnauth: (user: TelegramUser) => void;
-    };
-  }
-}
 
 const TelegramLoginButton = () => {
-  const { loginWithTelegram } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
-    console.log('Initializing Telegram Login Widget...');
+    console.log('Initializing Telegram Login Widget (data-auth-url)...');
     
-    // Добавляем скрипт Telegram Login Widget
+    // Добавляем скрипт Telegram Login Widget с data-auth-url
     const script = document.createElement('script');
     script.src = 'https://telegram.org/js/telegram-widget.js?22';
     script.setAttribute('data-telegram-login', 'KalControlBot');
@@ -26,61 +15,42 @@ const TelegramLoginButton = () => {
     script.setAttribute('data-radius', '8');
     script.setAttribute('data-request-access', 'write');
     script.setAttribute('data-userpic', 'true');
-    script.setAttribute('data-onauth', 'onTelegramAuth(user)');
+    // Устанавливаем data-auth-url на наш серверный эндпоинт (например, /api/auth/telegram)
+    // (замените на ваш домен, если необходимо)
+    script.setAttribute('data-auth-url', 'https://diet-glass-dashboard.vercel.app/api/auth/telegram');
     script.async = true;
 
-    // Логируем все атрибуты скрипта для отладки
-    console.log('Telegram Login Widget attributes:', {
+    // Логируем атрибуты скрипта (для отладки)
+    console.log('Telegram Login Widget attributes (data-auth-url):', {
       botName: script.getAttribute('data-telegram-login'),
       size: script.getAttribute('data-size'),
       radius: script.getAttribute('data-radius'),
       requestAccess: script.getAttribute('data-request-access'),
       userpic: script.getAttribute('data-userpic'),
-      onAuth: script.getAttribute('data-onauth')
+      authUrl: script.getAttribute('data-auth-url')
     });
-
-    // Определяем функцию обратного вызова
-    window.onTelegramAuth = async (user: TelegramUser) => {
-      console.log('Telegram auth callback received:', user);
-      try {
-        await loginWithTelegram(user);
-        console.log('Login successful');
-        toast({
-          title: "Добро пожаловать!",
-          description: "Вы успешно вошли через Telegram.",
-        });
-      } catch (error) {
-        console.error('Telegram login error:', error);
-        toast({
-          title: "Ошибка входа",
-          description: "Не удалось войти через Telegram. Попробуйте снова.",
-          variant: "destructive"
-        });
-      }
-    };
 
     // Добавляем скрипт на страницу
     const container = document.getElementById('telegram-login-container');
     if (container) {
-      console.log('Found container for Telegram Login Widget');
-      container.appendChild(script);
+       console.log('Found container for Telegram Login Widget (data-auth-url)');
+       container.appendChild(script);
     } else {
-      console.error('Container for Telegram Login Widget not found!');
+       console.error('Container (telegram-login-container) not found!');
     }
 
-    // Очистка при размонтировании
+    // Очистка при размонтировании (удаляем скрипт, если он был добавлен)
     return () => {
-      console.log('Cleaning up Telegram Login Widget...');
-      if (container && script.parentNode) {
-        container.removeChild(script);
-      }
-      delete window.onTelegramAuth;
+       console.log('Cleaning up Telegram Login Widget (data-auth-url)...');
+       if (container && script.parentNode) {
+          container.removeChild(script);
+       }
     };
-  }, [loginWithTelegram, toast]);
+  }, [toast]);
 
   return (
     <div id="telegram-login-container" className="flex justify-center">
-      {/* Telegram Login Widget будет вставлен сюда */}
+      {/* Telegram Login Widget (data-auth-url) будет вставлен сюда */}
     </div>
   );
 };
