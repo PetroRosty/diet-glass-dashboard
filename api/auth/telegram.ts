@@ -37,6 +37,10 @@ export default async function handler(
   req: VercelRequest,
   res: VercelResponse
 ): Promise<VercelResponse> {
+  console.log('Telegram auth handler triggered');
+  console.log('VITE_SUPABASE_URL:', process.env.VITE_SUPABASE_URL ? '[SET]' : '[NOT SET]');
+  console.log('SUPABASE_SERVICE_ROLE_KEY:', process.env.SUPABASE_SERVICE_ROLE_KEY ? '[SET]' : '[NOT SET]');
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -76,10 +80,8 @@ export default async function handler(
       .upsert({
         telegram_id: userData.id,
         first_name: userData.first_name,
-        last_name: userData.last_name,
         username: userData.username,
         locale: userData.language_code || 'en',
-        photo_url: userData.photo_url,
         updated_at: new Date().toISOString()
       }, {
         onConflict: 'telegram_id'
