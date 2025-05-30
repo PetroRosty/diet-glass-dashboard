@@ -82,7 +82,6 @@ export default async function handler(
         first_name: userData.first_name,
         username: userData.username,
         locale: userData.language_code || 'en',
-        updated_at: new Date().toISOString()
       }, {
         onConflict: 'telegram_id'
       }).select();
