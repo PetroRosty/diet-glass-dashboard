@@ -1,5 +1,4 @@
 import { createClient } from '@supabase/supabase-js';
-import crypto from 'node:crypto';
 import { URL } from 'url';
 
 // Initialize Supabase client with service role key for server-side operations
@@ -8,10 +7,13 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY! // Use service role key for server operations
 );
 
-// Function to verify Telegram hash
-function checkTelegramHash(data: Record<string, string>, botToken: string): boolean {
+// Function to verify Telegram hash (using dynamic import for crypto)
+async function checkTelegramHash(data: Record<string, string>, botToken: string): Promise<boolean> {
   const { hash, ...userData } = data;
   if (!hash) return false;
+
+  // Dynamically import crypto
+  const crypto = await import('node:crypto');
 
   // Create data check string as per Telegram docs
   const dataCheckArr = Object.keys(userData)
@@ -57,10 +59,10 @@ export default async function handler(req: Request) {
       return Response.redirect(`${url.origin}?telegram_login=failed&error=server_config`);
     }
 
-    if (!checkTelegramHash(params, botToken)) {
+    // Use await here for the async checkTelegramHash function
+    if (!await checkTelegramHash(params, botToken)) {
       console.error('Invalid hash');
        // Use url.origin for redirect
-      const redirectBase = process.env.VERCEL_ENV === 'development' ? 'http://localhost:8080' : url.origin;
       return Response.redirect(`${url.origin}?telegram_login=failed&error=invalid_hash`);
     }
 
