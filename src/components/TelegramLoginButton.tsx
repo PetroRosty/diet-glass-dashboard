@@ -1,16 +1,22 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { TelegramUser, User } from '@/types/auth';
+import { TelegramUser } from '@/types/auth';
 
-const TelegramLoginButton = () => {
+// Объявляем тип для пропсов компонента
+interface TelegramLoginButtonProps {
+  onAuth?: (user: TelegramUser) => void; // Опциональный проп для внешнего обработчика
+}
+
+const TelegramLoginButton: React.FC<TelegramLoginButtonProps> = ({ onAuth }) => {
   const navigate = useNavigate();
   const { setAuthenticatedUser } = useAuth();
 
   useEffect(() => {
-    console.log('Initializing Telegram Login Widget with data-onauth...');
-    
-    (window as any).onTelegramAuth = async (user: TelegramUser) => {
+    console.log('Setting up Telegram Login Widget...');
+
+    // 1. Сначала объявляем глобальную функцию onTelegramAuth
+    window.onTelegramAuth = async (user: TelegramUser) => {
       console.log('Telegram authentication data received:', user);
 
       try {
@@ -36,7 +42,16 @@ const TelegramLoginButton = () => {
             isPro: result.user.is_pro || false,
             loginMethod: 'telegram' as 'telegram'
           };
+          
+          // Обновляем состояние через AuthProvider
           setAuthenticatedUser(authenticatedUser);
+          
+          // Вызываем внешний обработчик, если он передан
+          if (onAuth) {
+            onAuth(user);
+          }
+
+          // Перенаправляем на главную страницу
           navigate('/');
         } else {
           console.error('Server auth failed:', result.error || response.statusText);
@@ -46,6 +61,7 @@ const TelegramLoginButton = () => {
       }
     };
 
+    // 2. Теперь создаем и добавляем скрипт Telegram
     const script = document.createElement('script');
     script.async = true;
     script.src = "https://telegram.org/js/telegram-widget.js?22";
@@ -64,6 +80,7 @@ const TelegramLoginButton = () => {
       src: script.src
     });
 
+    // 3. Добавляем скрипт в контейнер
     const container = document.getElementById('telegram-login-container');
     if (container) {
       console.log('Found container, cleaning and appending script...');
@@ -74,27 +91,29 @@ const TelegramLoginButton = () => {
       console.error('Container telegram-login-container not found!');
     }
 
+    // 4. Очистка при размонтировании компонента
     return () => {
       console.log('Cleaning up Telegram Login Widget...');
-      if ((window as any).onTelegramAuth) {
-         delete (window as any).onTelegramAuth;
-      }
+      // Удаляем глобальную функцию
+      delete window.onTelegramAuth;
+      // Очищаем контейнер
       if (container) {
         container.innerHTML = '';
         console.log('Container cleaned');
       }
     };
-  }, [setAuthenticatedUser, navigate]);
+  }, [setAuthenticatedUser, navigate, onAuth]); // Добавляем onAuth в зависимости
 
   return (
     <div id="telegram-login-container" className="flex justify-center"></div>
   );
 };
 
-export default TelegramLoginButton;
-
+// Объявляем глобальный тип для window.onTelegramAuth
 declare global {
   interface Window {
-    onTelegramAuth: (user: TelegramUser) => void;
+    onTelegramAuth?: (user: TelegramUser) => void; // Делаем свойство опциональным
   }
 }
+
+export default TelegramLoginButton;
