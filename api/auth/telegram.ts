@@ -1,29 +1,22 @@
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
 
-// Initialize Supabase client with service role key for server-side operations
 const supabase = createClient(
-  process.env.VITE_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
+  process.env.VITE_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-// Function to verify Telegram hash
 function checkTelegramHash(data, botToken) {
   const { hash, ...userData } = data;
   if (!hash) return false;
-
-  // Create data check string as per Telegram docs
   const dataCheckArr = Object.keys(userData)
     .sort()
     .map(k => `${k}=${userData[k]}`);
   const dataCheckString = dataCheckArr.join('\n');
-
-  // Create HMAC-SHA256 hash
   const secretKey = crypto.createHash('sha256').update(botToken).digest();
   const hmac = crypto.createHmac('sha256', secretKey);
   hmac.update(dataCheckString);
   const calculatedHash = hmac.digest('hex');
-
   return calculatedHash === hash;
 }
 
@@ -35,7 +28,6 @@ export default async function handler(req, res) {
 
   let url;
   try {
-    // Для совместимости с Node.js serverless (Vercel), обязательно второй аргумент к URL!
     url = new URL(req.url, `https://${req.headers.host}`);
     const params = Object.fromEntries(url.searchParams.entries());
     const requiredFields = ['id', 'first_name', 'username', 'hash', 'auth_date'];
