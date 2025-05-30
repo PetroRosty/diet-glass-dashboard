@@ -1,60 +1,36 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { TelegramUser } from '@/types/auth';
 
 const TelegramLoginButton = () => {
   const navigate = useNavigate();
+  const { loginWithTelegram } = useAuth();
 
   useEffect(() => {
     console.log('Initializing Telegram Login Widget with data-onauth...');
     
-    // Определяем глобальную функцию onTelegramAuth здесь, внутри компонента
-    // чтобы она имела доступ к navigate и другим хукам/состоянию при необходимости
-    (window as any).onTelegramAuth = async (user: any) => {
+    (window as any).onTelegramAuth = async (user: TelegramUser) => {
       console.log('Telegram authentication data received:', user);
 
-      // Отправить данные пользователя на сервер для проверки hash и авторизации
       try {
-        console.log('Sending Telegram auth data to server...');
-        const res = await fetch('/api/auth/telegram', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(user)
-        });
-
-        const data = await res.json();
-        console.log('Server response:', data);
-
-        if (res.ok && data.success) {
-          console.log('Server auth successful');
-          // TODO: Обновить состояние авторизации клиента здесь
-          // Например, через контекст AuthProvider
-
-          // Используем navigate для программной навигации
-          navigate('/'); // Перенаправляем на главную страницу
-
-        } else {
-          console.error('Server auth failed:', data.error || 'Unknown server error');
-          // TODO: Обработка ошибки на клиенте (например, показ тоста)
-          // Сейчас просто логируем ошибку. Можно использовать useToast, но его нужно передать или использовать контекст/события.
-        }
+        console.log('Calling loginWithTelegram from AuthProvider...');
+        await loginWithTelegram(user);
 
       } catch (error) {
-        console.error('Error sending auth data to server:', error);
-        // TODO: Обработка ошибки fetch
+        console.error('Error during Telegram login process:', error);
       }
     };
 
-    // Создаём скрипт
     const script = document.createElement('script');
     script.async = true;
     script.src = "https://telegram.org/js/telegram-widget.js?22";
-    script.setAttribute('data-telegram-login', 'KalControlBot'); // без @
+    script.setAttribute('data-telegram-login', 'KalControlBot');
     script.setAttribute('data-size', 'large');
     script.setAttribute('data-userpic', 'true');
     script.setAttribute('data-request-access', 'write');
     script.setAttribute('data-onauth', 'onTelegramAuth(user)');
 
-    // Логируем все атрибуты для проверки
     console.log('Telegram Login Widget attributes:', {
       botName: script.getAttribute('data-telegram-login'),
       size: script.getAttribute('data-size'),
@@ -64,18 +40,16 @@ const TelegramLoginButton = () => {
       src: script.src
     });
 
-    // Добавляем скрипт в контейнер
     const container = document.getElementById('telegram-login-container');
     if (container) {
       console.log('Found container, cleaning and appending script...');
-      container.innerHTML = ''; // чистим контейнер перед вставкой
+      container.innerHTML = '';
       container.appendChild(script);
       console.log('Script appended to container');
     } else {
       console.error('Container telegram-login-container not found!');
     }
 
-    // Удаляем глобальную функцию и чистим контейнер при размонтировании
     return () => {
       console.log('Cleaning up Telegram Login Widget...');
       if ((window as any).onTelegramAuth) {
@@ -86,7 +60,7 @@ const TelegramLoginButton = () => {
         console.log('Container cleaned');
       }
     };
-  }, [navigate]);
+  }, [loginWithTelegram]);
 
   return (
     <div id="telegram-login-container" className="flex justify-center"></div>
@@ -97,6 +71,6 @@ export default TelegramLoginButton;
 
 declare global {
   interface Window {
-    onTelegramAuth: (user: any) => void;
+    onTelegramAuth: (user: TelegramUser) => void;
   }
 }
