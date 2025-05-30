@@ -34,14 +34,17 @@ function checkTelegramHash(data: TelegramAuthData, botToken: string): boolean {
 export default async function handler(
   req: VercelRequest,
   res: VercelResponse
-): Promise<void> {
+): Promise<VercelResponse> {
   if (req.method !== 'GET') {
     res.status(405).send('Method not allowed');
-    return;
+    return res;
   }
 
   let url;
   try {
+    if (!req.url) {
+      return res.redirect('/?telegram_login=failed&error=missing_url');
+    }
     url = new URL(req.url, `https://${req.headers.host}`);
     const params = Object.fromEntries(url.searchParams.entries()) as TelegramAuthData;
     const requiredFields = ['id', 'first_name', 'username', 'hash', 'auth_date'] as const;
