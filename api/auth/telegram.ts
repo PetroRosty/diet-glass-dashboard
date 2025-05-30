@@ -8,13 +8,15 @@ const supabase = createClient(
 );
 
 interface TelegramAuthData {
-  id: string;
+  id: number;
   first_name: string;
-  username: string;
+  last_name?: string;
+  username?: string;
   hash: string;
-  auth_date: string;
+  auth_date: number;
+  photo_url?: string;
   language_code?: string;
-  [key: string]: string | undefined;
+  [key: string]: any;
 }
 
 function checkTelegramHash(data: TelegramAuthData, botToken: string): boolean {
@@ -35,61 +37,62 @@ export default async function handler(
   req: VercelRequest,
   res: VercelResponse
 ): Promise<VercelResponse> {
-  if (req.method !== 'GET') {
-    res.status(405).send('Method not allowed');
-    return res;
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  let url;
+  let userData: TelegramAuthData;
   try {
-    if (!req.url) {
-      return res.redirect('/?telegram_login=failed&error=missing_url');
-    }
-    url = new URL(req.url, `https://${req.headers.host}`);
-    const params = Object.fromEntries(url.searchParams.entries()) as TelegramAuthData;
-    const requiredFields = ['id', 'first_name', 'username', 'hash', 'auth_date'] as const;
-    const missingFields = requiredFields.filter(field => !params[field]);
+    userData = req.body as TelegramAuthData;
+
+    const requiredFields = ['id', 'first_name', 'hash', 'auth_date'] as const;
+    const missingFields = requiredFields.filter(field => !userData[field as keyof TelegramAuthData]);
+
     if (missingFields.length > 0) {
-      return res.redirect(`/?telegram_login=failed&error=missing_fields`);
+      console.error('Missing fields in Telegram data:', missingFields);
+      return res.status(400).json({ error: 'missing_fields', details: missingFields });
     }
+
     const botToken = process.env.TELEGRAM_BOT_TOKEN;
     if (!botToken) {
-      return res.redirect(`/?telegram_login=failed&error=server_config`);
+      console.error('TELEGRAM_BOT_TOKEN is not set');
+      return res.status(500).json({ error: 'server_config', details: 'TELEGRAM_BOT_TOKEN not set' });
     }
-    if (!checkTelegramHash(params, botToken)) {
-      return res.redirect(`/?telegram_login=failed&error=invalid_hash`);
+
+    if (!checkTelegramHash(userData, botToken)) {
+      console.error('Invalid hash');
+      return res.status(400).json({ error: 'invalid_hash' });
     }
-    const authDate = parseInt(params.auth_date);
+
+    const authDate = userData.auth_date;
     const now = Math.floor(Date.now() / 1000);
     if (now - authDate > 3600) {
-      return res.redirect(`/?telegram_login=failed&error=expired`);
+      console.error('Auth data expired');
+      return res.status(400).json({ error: 'expired' });
     }
-    const { error: upsertError } = await supabase
+
+    const { data, error: upsertError } = await supabase
       .from('profiles')
       .upsert({
-        telegram_id: params.id,
-        first_name: params.first_name,
-        username: params.username,
-        locale: params.language_code || 'en',
+        telegram_id: userData.id,
+        first_name: userData.first_name,
+        last_name: userData.last_name,
+        username: userData.username,
+        locale: userData.language_code || 'en',
+        photo_url: userData.photo_url,
         updated_at: new Date().toISOString()
       }, {
         onConflict: 'telegram_id'
-      });
+      }).select();
+
     if (upsertError) {
-      return res.redirect(`/?telegram_login=failed&error=database`);
+      console.error('Supabase upsert error:', upsertError);
+      return res.status(500).json({ error: 'database_error', details: upsertError.message });
     }
-    const redirectUrl = new URL(`https://${req.headers.host}`);
-    redirectUrl.searchParams.set('telegram_login', 'success');
-    redirectUrl.searchParams.set('telegram_id', params.id);
-    redirectUrl.searchParams.set('first_name', params.first_name);
-    redirectUrl.searchParams.set('username', params.username);
-    return res.redirect(redirectUrl.toString());
-  } catch (error) {
+
+    return res.status(200).json({ success: true, user: data ? data[0] : null });
+  } catch (error: any) {
     console.error('Error in telegram auth handler:', error);
-    if (url) {
-      return res.redirect(`${url.origin}?telegram_login=failed&error=server_error`);
-    } else {
-      return res.redirect('/?telegram_login=failed&error=url_parsing_failed');
-    }
+    return res.status(500).json({ error: 'server_error', details: error.message });
   }
 }
