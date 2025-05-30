@@ -1,11 +1,11 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { TelegramUser } from '@/types/auth';
+import { TelegramUser, User } from '@/types/auth';
 
 const TelegramLoginButton = () => {
   const navigate = useNavigate();
-  const { loginWithTelegram } = useAuth();
+  const { setAuthenticatedUser } = useAuth();
 
   useEffect(() => {
     console.log('Initializing Telegram Login Widget with data-onauth...');
@@ -14,11 +14,37 @@ const TelegramLoginButton = () => {
       console.log('Telegram authentication data received:', user);
 
       try {
-        console.log('Calling loginWithTelegram from AuthProvider...');
-        await loginWithTelegram(user);
+        console.log('Sending Telegram auth data to server for verification and upsert...');
+        const res = await fetch('/api/auth/telegram', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(user)
+        });
+
+        const data = await res.json();
+        console.log('Server response:', data);
+
+        if (res.ok && data.success) {
+          console.log('Server auth successful, updating client state...');
+          const authenticatedUser: User = {
+            id: user.id.toString(),
+            name: `${user.first_name}${user.last_name ? ' ' + user.last_name : ''}`,
+            email: user.username ? `${user.username}@telegram.user` : `${user.id}@telegram.user`,
+            avatar: user.photo_url,
+            isPro: data.user?.is_pro || false,
+            loginMethod: 'telegram'
+          };
+
+          setAuthenticatedUser(authenticatedUser);
+
+        } else {
+          console.error('Server auth failed:', data.error || 'Unknown server error');
+          navigate('/login?error=telegram_auth_failed');
+        }
 
       } catch (error) {
-        console.error('Error during Telegram login process:', error);
+        console.error('Error sending auth data to server:', error);
+        navigate('/login?error=network_error');
       }
     };
 
@@ -60,7 +86,7 @@ const TelegramLoginButton = () => {
         console.log('Container cleaned');
       }
     };
-  }, [loginWithTelegram]);
+  }, [setAuthenticatedUser, navigate]);
 
   return (
     <div id="telegram-login-container" className="flex justify-center"></div>
