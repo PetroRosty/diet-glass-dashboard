@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import crypto from 'crypto';
+import crypto from 'node:crypto';
 import { URL } from 'url';
 
 // Initialize Supabase client with service role key for server-side operations
