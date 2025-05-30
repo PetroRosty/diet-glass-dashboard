@@ -1,12 +1,23 @@
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
+import { VercelRequest, VercelResponse } from '@vercel/node';
 
 const supabase = createClient(
   process.env.VITE_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-function checkTelegramHash(data, botToken) {
+interface TelegramAuthData {
+  id: string;
+  first_name: string;
+  username: string;
+  hash: string;
+  auth_date: string;
+  language_code?: string;
+  [key: string]: string | undefined;
+}
+
+function checkTelegramHash(data: TelegramAuthData, botToken: string): boolean {
   const { hash, ...userData } = data;
   if (!hash) return false;
   const dataCheckArr = Object.keys(userData)
@@ -20,7 +31,10 @@ function checkTelegramHash(data, botToken) {
   return calculatedHash === hash;
 }
 
-export default async function handler(req, res) {
+export default async function handler(
+  req: VercelRequest,
+  res: VercelResponse
+): Promise<void> {
   if (req.method !== 'GET') {
     res.status(405).send('Method not allowed');
     return;
@@ -29,8 +43,8 @@ export default async function handler(req, res) {
   let url;
   try {
     url = new URL(req.url, `https://${req.headers.host}`);
-    const params = Object.fromEntries(url.searchParams.entries());
-    const requiredFields = ['id', 'first_name', 'username', 'hash', 'auth_date'];
+    const params = Object.fromEntries(url.searchParams.entries()) as TelegramAuthData;
+    const requiredFields = ['id', 'first_name', 'username', 'hash', 'auth_date'] as const;
     const missingFields = requiredFields.filter(field => !params[field]);
     if (missingFields.length > 0) {
       return res.redirect(`/?telegram_login=failed&error=missing_fields`);
