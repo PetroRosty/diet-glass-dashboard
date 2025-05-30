@@ -58,20 +58,37 @@ declare global {
   }
 }
 
-window.onTelegramAuth = (user: any) => {
+window.onTelegramAuth = async (user: any) => {
   console.log('Telegram authentication data received:', user);
-  alert('Logged in as ' + user.first_name + ' ' + user.last_name + ' (' + user.id + (user.username ? ', @' + user.username : '') + ')');
 
-  // TODO: Отправить данные пользователя на сервер для проверки и авторизации в Supabase
-  // Пример:
-  // fetch('/api/auth/telegram', {
-  //   method: 'POST',
-  //   headers: { 'Content-Type': 'application/json' },
-  //   body: JSON.stringify(user)
-  // }).then(res => res.json()).then(data => {
-  //   console.log('Server response:', data);
-  //   // Обработка ответа сервера (например, сохранение сессии)
-  // }).catch(error => {
-  //   console.error('Error sending auth data to server:', error);
-  // });
+  // Отправить данные пользователя на сервер для проверки hash и авторизации
+  try {
+    console.log('Sending Telegram auth data to server...');
+    const res = await fetch('/api/auth/telegram', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(user)
+    });
+
+    const data = await res.json();
+    console.log('Server response:', data);
+
+    if (res.ok && data.success) {
+      console.log('Server auth successful');
+      // TODO: Обработка успешной авторизации на клиенте (например, сохранение сессии, редирект)
+      // Сейчас просто редирект на главную для теста
+      window.location.href = '/';
+    } else {
+      console.error('Server auth failed:', data.error || 'Unknown server error');
+      // TODO: Обработка ошибки на клиенте (например, показ сообщения)
+      // Сейчас просто показ ошибки в консоли и, возможно, тост
+      // Возможно, вы захотите использовать useToast здесь, но прямые хуки в window.onTelegramAuth нельзя использовать.
+      // Можно передать функцию показа тоста или использовать глобальное событие.
+      // Пока просто логируем ошибку.
+    }
+
+  } catch (error) {
+    console.error('Error sending auth data to server:', error);
+    // TODO: Обработка ошибки fetch (например, показ сообщения)
+  }
 };
