@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 
 const TelegramLoginButton = () => {
   useEffect(() => {
-    console.log('Initializing Telegram Login Widget...');
+    console.log('Initializing Telegram Login Widget with data-onauth...');
     
     // Создаём скрипт
     const script = document.createElement('script');
@@ -12,7 +12,7 @@ const TelegramLoginButton = () => {
     script.setAttribute('data-size', 'large');
     script.setAttribute('data-userpic', 'true');
     script.setAttribute('data-request-access', 'write');
-    script.setAttribute('data-auth-url', 'https://diet-glass-dashboard.vercel.app/api/auth/telegram');
+    script.setAttribute('data-onauth', 'onTelegramAuth(user)');
 
     // Логируем все атрибуты для проверки
     console.log('Telegram Login Widget attributes:', {
@@ -20,7 +20,7 @@ const TelegramLoginButton = () => {
       size: script.getAttribute('data-size'),
       userpic: script.getAttribute('data-userpic'),
       requestAccess: script.getAttribute('data-request-access'),
-      authUrl: script.getAttribute('data-auth-url'),
+      onauth: script.getAttribute('data-onauth'),
       src: script.src
     });
 
@@ -51,3 +51,27 @@ const TelegramLoginButton = () => {
 };
 
 export default TelegramLoginButton;
+
+declare global {
+  interface Window {
+    onTelegramAuth: (user: any) => void;
+  }
+}
+
+window.onTelegramAuth = (user: any) => {
+  console.log('Telegram authentication data received:', user);
+  alert('Logged in as ' + user.first_name + ' ' + user.last_name + ' (' + user.id + (user.username ? ', @' + user.username : '') + ')');
+
+  // TODO: Отправить данные пользователя на сервер для проверки и авторизации в Supabase
+  // Пример:
+  // fetch('/api/auth/telegram', {
+  //   method: 'POST',
+  //   headers: { 'Content-Type': 'application/json' },
+  //   body: JSON.stringify(user)
+  // }).then(res => res.json()).then(data => {
+  //   console.log('Server response:', data);
+  //   // Обработка ответа сервера (например, сохранение сессии)
+  // }).catch(error => {
+  //   console.error('Error sending auth data to server:', error);
+  // });
+};
