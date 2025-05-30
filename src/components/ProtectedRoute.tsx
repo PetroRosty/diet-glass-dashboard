@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import LoginPage from '@/pages/LoginPage';
@@ -8,7 +7,9 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
+
+  console.log('ProtectedRoute check:', { isAuthenticated, isLoading, user: user ? '[SET]' : '[NOT SET]' });
 
   if (isLoading) {
     return (
