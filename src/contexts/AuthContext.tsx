@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 interface AuthContextType extends AuthState {
   loginWithTelegram: (telegramUser: TelegramUser) => Promise<void>;
   logout: () => void;
+  setAuthenticatedUser: (user: User) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -145,11 +146,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     dispatch({ type: 'LOGOUT' });
   };
 
+  const setAuthenticatedUser = (user: User) => {
+    localStorage.setItem('diet-diary-user', JSON.stringify(user));
+    dispatch({ type: 'LOGIN_SUCCESS', payload: user });
+    console.log('Authentication state updated with user:', user);
+  };
+
   return (
     <AuthContext.Provider value={{
       ...state,
       loginWithTelegram,
-      logout
+      logout,
+      setAuthenticatedUser
     }}>
       {children}
     </AuthContext.Provider>
