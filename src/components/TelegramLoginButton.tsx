@@ -12,7 +12,6 @@ const TelegramLoginButton = () => {
     script.src = 'https://telegram.org/js/telegram-widget.js?22';
     script.setAttribute('data-telegram-login', 'KalControlBot');
     script.setAttribute('data-size', 'large');
-    script.setAttribute('data-radius', '8');
     script.setAttribute('data-request-access', 'write');
     script.setAttribute('data-userpic', 'true');
     // Устанавливаем data-auth-url на наш серверный эндпоинт (например, /api/auth/telegram)
@@ -21,10 +20,9 @@ const TelegramLoginButton = () => {
     script.async = true;
 
     // Логируем атрибуты скрипта (для отладки)
-    console.log('Telegram Login Widget attributes (data-auth-url):', {
+    console.log('Telegram Login Widget attributes:', {
       botName: script.getAttribute('data-telegram-login'),
       size: script.getAttribute('data-size'),
-      radius: script.getAttribute('data-radius'),
       requestAccess: script.getAttribute('data-request-access'),
       userpic: script.getAttribute('data-userpic'),
       authUrl: script.getAttribute('data-auth-url')
