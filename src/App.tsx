@@ -9,32 +9,47 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import TelegramAuthHandler from "@/components/TelegramAuthHandler";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import { useEffect } from "react";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <AuthProvider>
-        <ProProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <TelegramAuthHandler />
-            <Routes>
-              <Route path="/" element={
-                <ProtectedRoute>
-                  <Index />
-                </ProtectedRoute>
-              } />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </ProProvider>
-      </AuthProvider>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  useEffect(() => {
+    console.log('App component mounted or location changed.');
+    const queryParams = new URLSearchParams(location.search);
+    console.log('Current URL search params:', location.search);
+    const telegramLoginStatus = queryParams.get('telegram_login');
+    console.log('telegram_login status param:', telegramLoginStatus);
+
+    if (telegramLoginStatus === 'success') {
+      // ... existing code ...
+    }
+  }, []);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <AuthProvider>
+          <ProProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <TelegramAuthHandler />
+              <Routes>
+                <Route path="/" element={
+                  <ProtectedRoute>
+                    <Index />
+                  </ProtectedRoute>
+                } />
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </ProProvider>
+        </AuthProvider>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
