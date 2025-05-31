@@ -1,5 +1,4 @@
 import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { TelegramUser } from '@/types/auth';
 
@@ -9,23 +8,17 @@ interface TelegramLoginButtonProps {
 }
 
 const TelegramLoginButton: React.FC<TelegramLoginButtonProps> = ({ onAuth }) => {
-  const navigate = useNavigate();
   const { setAuthenticatedUser } = useAuth();
 
   useEffect(() => {
     console.log('Setting up Telegram Login Widget...');
 
     // 1. Сначала объявляем глобальную функцию onTelegramAuth
-    // Это ДОЛЖНО быть сделано до вставки скрипта!
     window.onTelegramAuth = async (user: TelegramUser) => {
       console.log('Telegram authentication data received:', user);
 
       try {
-        // Сразу показываем alert для отладки
-        alert('Logged in as ' + user.first_name + ' ' + 
-              (user.last_name || '') + ' (' + user.id + 
-              (user.username ? ', @' + user.username : '') + ')');
-
+        // Сразу отправляем данные на сервер
         console.log('Sending Telegram auth data to server...');
         const response = await fetch('/api/auth/telegram', {
           method: 'POST',
@@ -49,6 +42,9 @@ const TelegramLoginButton: React.FC<TelegramLoginButtonProps> = ({ onAuth }) => 
             loginMethod: 'telegram' as 'telegram'
           };
           
+          // Сохраняем в localStorage перед редиректом
+          localStorage.setItem('user', JSON.stringify(authenticatedUser));
+          
           // Обновляем состояние через AuthProvider
           setAuthenticatedUser(authenticatedUser);
           
@@ -57,8 +53,7 @@ const TelegramLoginButton: React.FC<TelegramLoginButtonProps> = ({ onAuth }) => 
             onAuth(user);
           }
 
-          // Перенаправляем на главную страницу
-          navigate('/');
+          // Редирект произойдет автоматически через data-redirect-url
         } else {
           console.error('Server auth failed:', result.error || response.statusText);
           alert('Server authentication failed: ' + (result.error || response.statusText));
@@ -69,7 +64,7 @@ const TelegramLoginButton: React.FC<TelegramLoginButtonProps> = ({ onAuth }) => 
       }
     };
 
-    // 2. Теперь создаем скрипт Telegram
+    // 2. Создаем скрипт Telegram с redirect-url
     const script = document.createElement('script');
     script.async = true;
     script.src = "https://telegram.org/js/telegram-widget.js?22";
@@ -78,14 +73,14 @@ const TelegramLoginButton: React.FC<TelegramLoginButtonProps> = ({ onAuth }) => 
     script.setAttribute('data-userpic', 'true');
     script.setAttribute('data-request-access', 'write');
     script.setAttribute('data-onauth', 'onTelegramAuth(user)');
+    // Добавляем redirect-url - после успешной авторизации Telegram перенаправит на главную
+    script.setAttribute('data-redirect-url', window.location.origin + '/');
 
     // 3. Добавляем скрипт в контейнер
     const container = document.getElementById('telegram-login-container');
     if (container) {
       console.log('Found container, cleaning and appending script...');
-      // Очищаем контейнер перед добавлением скрипта
       container.innerHTML = '';
-      // Добавляем скрипт
       container.appendChild(script);
       console.log('Script appended to container');
     } else {
@@ -95,15 +90,13 @@ const TelegramLoginButton: React.FC<TelegramLoginButtonProps> = ({ onAuth }) => 
     // 4. Очистка при размонтировании компонента
     return () => {
       console.log('Cleaning up Telegram Login Widget...');
-      // Удаляем глобальную функцию
       delete window.onTelegramAuth;
-      // Очищаем контейнер
       if (container) {
         container.innerHTML = '';
         console.log('Container cleaned');
       }
     };
-  }, [setAuthenticatedUser, navigate, onAuth]); // Зависимости для useEffect
+  }, [setAuthenticatedUser, onAuth]);
 
   return (
     <div id="telegram-login-container" className="flex justify-center"></div>
