@@ -61,20 +61,40 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        // Check for saved user in localStorage
+        // Проверяем наличие сохраненного пользователя
         const savedUser = localStorage.getItem('diet-diary-user');
         if (savedUser) {
           try {
             const user = JSON.parse(savedUser);
-            // Проверяем, что данные пользователя валидны
+            // Проверяем валидность данных пользователя
             if (user && user.id && user.name) {
-              dispatch({ type: 'LOGIN_SUCCESS', payload: user });
+              // Проверяем, не истек ли срок хранения (7 дней)
+              const savedDate = localStorage.getItem('diet-diary-user-date');
+              if (savedDate) {
+                const savedTimestamp = parseInt(savedDate, 10);
+                const now = Date.now();
+                const sevenDays = 7 * 24 * 60 * 60 * 1000; // 7 дней в миллисекундах
+                
+                if (now - savedTimestamp < sevenDays) {
+                  dispatch({ type: 'LOGIN_SUCCESS', payload: user });
+                } else {
+                  // Если данные устарели, очищаем их
+                  localStorage.removeItem('diet-diary-user');
+                  localStorage.removeItem('diet-diary-user-date');
+                  dispatch({ type: 'LOGIN_ERROR' });
+                }
+              } else {
+                // Если нет даты сохранения, считаем данные устаревшими
+                localStorage.removeItem('diet-diary-user');
+                dispatch({ type: 'LOGIN_ERROR' });
+              }
             } else {
               throw new Error('Invalid user data');
             }
           } catch (error) {
             console.error('Error parsing saved user:', error);
             localStorage.removeItem('diet-diary-user');
+            localStorage.removeItem('diet-diary-user-date');
             dispatch({ type: 'LOGIN_ERROR' });
           }
         }
@@ -94,7 +114,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (!user || !user.id || !user.name) {
         throw new Error('Invalid user data');
       }
+      
+      // Сохраняем пользователя и дату сохранения
       localStorage.setItem('diet-diary-user', JSON.stringify(user));
+      localStorage.setItem('diet-diary-user-date', Date.now().toString());
+      
       dispatch({ type: 'LOGIN_SUCCESS', payload: user });
       console.log('Authentication state updated with user:', user);
     } catch (error) {
@@ -106,6 +130,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const logout = () => {
     try {
       localStorage.removeItem('diet-diary-user');
+      localStorage.removeItem('diet-diary-user-date');
       dispatch({ type: 'LOGOUT' });
     } catch (error) {
       console.error('Error during logout:', error);

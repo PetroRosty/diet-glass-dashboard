@@ -22,8 +22,8 @@ const ChatIdAuthHandler = () => {
       return;
     }
 
+    // Если есть chat_id в URL, проверяем его
     if (chatId) {
-      // Проверяем chat_id в базе данных
       const checkChatId = async () => {
         try {
           const response = await fetch(`/api/auth/check-chat-id?chat_id=${chatId}`);
@@ -43,10 +43,7 @@ const ChatIdAuthHandler = () => {
             // Проверяем, изменились ли данные пользователя
             const isNewLogin = !user || user.id !== newUser.id;
 
-            // Сохраняем в localStorage
-            localStorage.setItem('user', JSON.stringify(newUser));
-            
-            // Обновляем состояние через AuthProvider
+            // Обновляем состояние через AuthProvider (он сам сохранит в localStorage)
             setAuthenticatedUser(newUser);
 
             // Показываем сообщение только при новой авторизации
@@ -62,6 +59,25 @@ const ChatIdAuthHandler = () => {
             newUrl.search = '';
             window.history.replaceState({}, '', newUrl.toString());
           } else {
+            // Если проверка не удалась, но у нас есть сохраненный пользователь с таким ID,
+            // пробуем использовать его
+            const savedUser = localStorage.getItem('diet-diary-user');
+            if (savedUser) {
+              try {
+                const parsedUser = JSON.parse(savedUser);
+                if (parsedUser && parsedUser.id === chatId) {
+                  setAuthenticatedUser(parsedUser);
+                  toast({
+                    title: 'Восстановлена сессия',
+                    description: `С возвращением, ${parsedUser.name}!`,
+                  });
+                  return;
+                }
+              } catch (error) {
+                console.error('Error parsing saved user:', error);
+              }
+            }
+
             toast({
               title: 'Ошибка авторизации',
               description: 'Неверный chat_id или пользователь не найден',
