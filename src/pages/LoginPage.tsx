@@ -1,5 +1,4 @@
 import React from 'react';
-import TelegramLoginButton from '@/components/TelegramLoginButton';
 
 const LoginPage = () => {
   return (
@@ -15,18 +14,28 @@ const LoginPage = () => {
           </div>
 
           <div className="text-center mb-8">
-            <h2 className="text-xl font-semibold text-white mb-2">Добро пожаловать</h2>
-            <p className="text-gray-400 text-sm">Войдите через Telegram, чтобы продолжить</p>
-          </div>
-
-          {/* Telegram Login */}
-          <div className="mb-6">
-            <TelegramLoginButton />
+            <h2 className="text-xl font-semibold text-white mb-4">Добро пожаловать</h2>
+            <p className="text-gray-400 mb-4">
+              Для доступа к вашему дневнику питания, пожалуйста, перейдите по ссылке, отправленной вам в Telegram боте.
+            </p>
+            <div className="bg-gray-800 p-4 rounded-lg">
+              <p className="text-gray-300 text-sm mb-2">
+                Если у вас нет доступа к боту, напишите нам:
+              </p>
+              <a 
+                href="https://t.me/KalControlBot" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-fitness-blue hover:text-fitness-purple transition-colors"
+              >
+                @KalControlBot
+              </a>
+            </div>
           </div>
 
           <div className="mt-6 text-center">
             <p className="text-gray-400 text-sm">
-              Войдите через Telegram для доступа к вашему дневнику питания
+              После авторизации в боте вы получите персональную ссылку для входа в дневник
             </p>
           </div>
         </div>
