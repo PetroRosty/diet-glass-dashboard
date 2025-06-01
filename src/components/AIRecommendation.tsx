@@ -14,7 +14,14 @@ const AIRecommendation = () => {
   const { data: digest, isLoading, error } = useLatestDigest();
   const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [hoursSinceLastAnalysis, setHoursSinceLastAnalysis] = useState(0);
+
+  const calculateHoursUntilNextAnalysis = () => {
+    if (!digest?.for_date) return 24;
+    const lastAnalysisDate = new Date(digest.for_date);
+    const now = new Date();
+    const hours = (now.getTime() - lastAnalysisDate.getTime()) / (1000 * 60 * 60);
+    return Math.max(0, 24 - hours);
+  };
 
   const handleNewAnalysis = () => {
     if (!digest) {
@@ -26,13 +33,8 @@ const AIRecommendation = () => {
       return;
     }
 
-    // Проверяем, прошло ли 24 часа с последнего анализа
-    const lastAnalysisDate = new Date(digest.for_date);
-    const now = new Date();
-    const hours = (now.getTime() - lastAnalysisDate.getTime()) / (1000 * 60 * 60);
-    setHoursSinceLastAnalysis(hours);
-
-    if (hours < 24) {
+    const hoursUntilNext = calculateHoursUntilNextAnalysis();
+    if (hoursUntilNext > 0) {
       setIsDialogOpen(true);
     } else {
       // Здесь будет логика запроса нового анализа
@@ -139,7 +141,7 @@ const AIRecommendation = () => {
           </DialogHeader>
           <div className="mt-4 text-sm text-gray-300">
             <p>Последний анализ был получен {formatDate(digest?.for_date || '')}.</p>
-            <p className="mt-2">Следующий анализ будет доступен через {Math.ceil(24 - hoursSinceLastAnalysis)} часов.</p>
+            <p className="mt-2">Следующий анализ будет доступен через {Math.ceil(calculateHoursUntilNextAnalysis())} часов.</p>
           </div>
         </DialogContent>
       </Dialog>
