@@ -88,6 +88,8 @@ const AIRecommendation = () => {
     }
   };
 
+  const hoursUntilNext = calculateHoursUntilNextAnalysis();
+
   return (
     <div className="glass-card p-6 animate-fade-in">
       <div className="flex items-center justify-between mb-4">
@@ -141,7 +143,7 @@ const AIRecommendation = () => {
           </DialogHeader>
           <div className="mt-4 text-sm text-gray-300">
             <p>Последний анализ был получен {formatDate(digest?.for_date || '')}.</p>
-            <p className="mt-2">Следующий анализ будет доступен через {Math.ceil(calculateHoursUntilNextAnalysis())} часов.</p>
+            <p className="mt-2">Следующий анализ будет доступен через {Math.ceil(hoursUntilNext)} часов.</p>
           </div>
         </DialogContent>
       </Dialog>
