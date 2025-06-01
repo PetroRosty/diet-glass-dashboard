@@ -6,12 +6,21 @@ import { useToast } from '@/hooks/use-toast';
 const ChatIdAuthHandler = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { setAuthenticatedUser } = useAuth();
+  const { setAuthenticatedUser, user } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const chatId = params.get('chat_id');
+
+    // Если пользователь уже авторизован и chat_id совпадает с текущим пользователем,
+    // просто очищаем URL без показа сообщения
+    if (user && user.id === chatId) {
+      const newUrl = new URL(window.location.href);
+      newUrl.search = '';
+      window.history.replaceState({}, '', newUrl.toString());
+      return;
+    }
 
     if (chatId) {
       // Проверяем chat_id в базе данных
@@ -22,7 +31,7 @@ const ChatIdAuthHandler = () => {
 
           if (response.ok && data.success) {
             // Создаем объект пользователя
-            const user = {
+            const newUser = {
               id: chatId,
               name: data.user.first_name + (data.user.last_name ? ' ' + data.user.last_name : ''),
               email: `${chatId}@telegram.user`,
@@ -31,16 +40,22 @@ const ChatIdAuthHandler = () => {
               loginMethod: 'telegram' as const
             };
 
+            // Проверяем, изменились ли данные пользователя
+            const isNewLogin = !user || user.id !== newUser.id;
+
             // Сохраняем в localStorage
-            localStorage.setItem('user', JSON.stringify(user));
+            localStorage.setItem('user', JSON.stringify(newUser));
             
             // Обновляем состояние через AuthProvider
-            setAuthenticatedUser(user);
+            setAuthenticatedUser(newUser);
 
-            toast({
-              title: 'Успешная авторизация',
-              description: `Добро пожаловать, ${user.name}!`,
-            });
+            // Показываем сообщение только при новой авторизации
+            if (isNewLogin) {
+              toast({
+                title: 'Успешная авторизация',
+                description: `Добро пожаловать, ${newUser.name}!`,
+              });
+            }
 
             // Очищаем URL от параметров
             const newUrl = new URL(window.location.href);
@@ -67,7 +82,7 @@ const ChatIdAuthHandler = () => {
 
       checkChatId();
     }
-  }, [location.search, setAuthenticatedUser, toast, navigate]);
+  }, [location.search, setAuthenticatedUser, toast, navigate, user]);
 
   return null; // Этот компонент не рендерит ничего
 };
