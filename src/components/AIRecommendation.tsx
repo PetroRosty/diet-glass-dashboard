@@ -14,6 +14,7 @@ const AIRecommendation = () => {
   const { data: digest, isLoading, error } = useLatestDigest();
   const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [hoursSinceLastAnalysis, setHoursSinceLastAnalysis] = useState(0);
 
   const handleNewAnalysis = () => {
     if (!digest) {
@@ -28,9 +29,10 @@ const AIRecommendation = () => {
     // Проверяем, прошло ли 24 часа с последнего анализа
     const lastAnalysisDate = new Date(digest.for_date);
     const now = new Date();
-    const hoursSinceLastAnalysis = (now.getTime() - lastAnalysisDate.getTime()) / (1000 * 60 * 60);
+    const hours = (now.getTime() - lastAnalysisDate.getTime()) / (1000 * 60 * 60);
+    setHoursSinceLastAnalysis(hours);
 
-    if (hoursSinceLastAnalysis < 24) {
+    if (hours < 24) {
       setIsDialogOpen(true);
     } else {
       // Здесь будет логика запроса нового анализа
