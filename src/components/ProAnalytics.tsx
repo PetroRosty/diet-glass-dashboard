@@ -2,7 +2,57 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { useMonthlyAnalytics } from '@/hooks/useSupabaseData';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { TrendingUp, Calendar, Target } from 'lucide-react';
+import { TrendingUp, Calendar, Target, HelpCircle } from 'lucide-react';
+import {
+  Tooltip as UITooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+
+// Выносим карточку статистики в отдельный компонент
+const StatCard = ({ 
+  title, 
+  value, 
+  subtitle, 
+  icon: Icon, 
+  tooltipText,
+  gradientFrom,
+  gradientTo,
+  borderColor
+}: { 
+  title: string;
+  value: string | number;
+  subtitle: string;
+  icon: React.ElementType;
+  tooltipText: string;
+  gradientFrom: string;
+  gradientTo: string;
+  borderColor: string;
+}) => (
+  <div className={`bg-gradient-to-r ${gradientFrom} ${gradientTo} p-4 rounded-lg border ${borderColor}`}>
+    <div className="flex items-center justify-between mb-2">
+      <div className="flex items-center space-x-2 min-w-0">
+        <Icon className="w-4 h-4 text-fitness-purple flex-shrink-0" />
+        <span className="text-sm text-gray-400 truncate">{title}</span>
+      </div>
+      <TooltipProvider>
+        <UITooltip>
+          <TooltipTrigger asChild>
+            <button className="text-gray-500 hover:text-gray-400 transition-colors flex-shrink-0 ml-2">
+              <HelpCircle className="w-4 h-4" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent className="bg-gray-800 border-gray-700 text-gray-200 max-w-[250px] p-3">
+            <p className="text-sm">{tooltipText}</p>
+          </TooltipContent>
+        </UITooltip>
+      </TooltipProvider>
+    </div>
+    <div className="text-xl sm:text-2xl font-bold text-white truncate">{value}</div>
+    <div className="text-xs text-gray-400 mt-1 truncate">{subtitle}</div>
+  </div>
+);
 
 const ProAnalytics = () => {
   const { data, isLoading, error } = useMonthlyAnalytics();
@@ -18,7 +68,7 @@ const ProAnalytics = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <Skeleton className="h-24" />
               <Skeleton className="h-24" />
               <Skeleton className="h-24" />
@@ -59,35 +109,39 @@ const ProAnalytics = () => {
       <CardContent>
         <div className="space-y-6">
           {/* Статистика */}
-          <div className="grid grid-cols-3 gap-4">
-            <div className="bg-gradient-to-r from-fitness-purple/20 to-fitness-blue/20 p-4 rounded-lg border border-fitness-purple/30">
-              <div className="flex items-center space-x-2 mb-2">
-                <Calendar className="w-4 h-4 text-fitness-purple" />
-                <span className="text-sm text-gray-400">Дней с данными</span>
-              </div>
-              <div className="text-2xl font-bold text-white">{stats.totalDays}</div>
-              <div className="text-xs text-gray-400 mt-1">
-                за {stats.monthsWithData} {stats.monthsWithData === 1 ? 'месяц' : 'месяцев'}
-              </div>
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <StatCard
+              title="Дней с данными"
+              value={stats.totalDays}
+              subtitle={`за ${stats.monthsWithData} ${stats.monthsWithData === 1 ? 'месяц' : 'месяцев'}`}
+              icon={Calendar}
+              tooltipText="Количество дней, за которые у вас есть записи о питании. Чем больше дней, тем точнее анализ."
+              gradientFrom="from-fitness-purple/20"
+              gradientTo="to-fitness-blue/20"
+              borderColor="border-fitness-purple/30"
+            />
 
-            <div className="bg-gradient-to-r from-fitness-blue/20 to-fitness-green/20 p-4 rounded-lg border border-fitness-blue/30">
-              <div className="flex items-center space-x-2 mb-2">
-                <TrendingUp className="w-4 h-4 text-fitness-blue" />
-                <span className="text-sm text-gray-400">Средние калории</span>
-              </div>
-              <div className="text-2xl font-bold text-white">{stats.avgCalories.toLocaleString()}</div>
-              <div className="text-xs text-gray-400 mt-1">ккал в день</div>
-            </div>
+            <StatCard
+              title="Средние калории"
+              value={`${stats.avgCalories.toLocaleString()} ккал`}
+              subtitle="в день"
+              icon={TrendingUp}
+              tooltipText="Среднее количество калорий, потребляемых за день. Рассчитывается на основе всех дней с данными."
+              gradientFrom="from-fitness-blue/20"
+              gradientTo="to-fitness-green/20"
+              borderColor="border-fitness-blue/30"
+            />
 
-            <div className="bg-gradient-to-r from-fitness-green/20 to-fitness-purple/20 p-4 rounded-lg border border-fitness-green/30">
-              <div className="flex items-center space-x-2 mb-2">
-                <Target className="w-4 h-4 text-fitness-green" />
-                <span className="text-sm text-gray-400">Выполнение целей</span>
-              </div>
-              <div className="text-2xl font-bold text-white">{stats.goalCompletion}%</div>
-              <div className="text-xs text-gray-400 mt-1">месяцев с данными</div>
-            </div>
+            <StatCard
+              title="Выполнение целей"
+              value={`${stats.goalCompletion}%`}
+              subtitle="месяцев с данными"
+              icon={Target}
+              tooltipText="Процент месяцев, в которых вы достигли своих целей по питанию. Учитываются все месяцы с данными."
+              gradientFrom="from-fitness-green/20"
+              gradientTo="to-fitness-purple/20"
+              borderColor="border-fitness-green/30"
+            />
           </div>
 
           {/* График */}
