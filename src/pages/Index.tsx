@@ -16,8 +16,38 @@ import ProBlock from '@/components/ProBlock';
 import { MessageSquare } from 'lucide-react';
 
 const Index = () => {
-  const { user } = useAuth();
-  const { data: profileData, isLoading: profileLoading } = useUserProfile();
+  const { user, isLoading: authLoading } = useAuth();
+  const { data: profileData, isLoading: profileLoading, error: profileError } = useUserProfile();
+  
+  // Показываем состояние загрузки
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-fitness-blue border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-white">Загрузка...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Если пользователь не авторизован, показываем сообщение
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-4xl mb-4">🔒</div>
+          <h1 className="text-2xl font-bold text-white mb-2">Требуется авторизация</h1>
+          <p className="text-gray-400">Пожалуйста, войдите в систему через Telegram</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Если есть ошибка загрузки профиля, показываем сообщение
+  if (profileError) {
+    console.error('Error loading profile:', profileError);
+  }
   
   const getUserName = () => {
     if (profileData && profileData.length > 0) {
